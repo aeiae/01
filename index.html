@@ -4340,18 +4340,25 @@
                 document.getElementById('result-inclusive').textContent = '-';
             }
         }
+        function calcBudget() {
+    const amount = parseFloat(document.getElementById('budget-amount').value) || 0;
+    const rate = 0.09;
+    
+    const exclusive = amount / (1 + rate);
+    const tax = amount - exclusive;
+
+    // 取消千分位分隔，直接固定两位小数
+    document.getElementById('budget-inclusive').textContent = amount.toFixed(2);
+    document.getElementById('budget-tax').textContent = tax.toFixed(2);
+    document.getElementById('budget-exclusive').textContent = exclusive.toFixed(2);
+}
         
-                function calcBudget() {
-            const amount = parseFloat(document.getElementById('budget-amount').value) || 0;
-            const rate = 0.09;
-            
-            const exclusive = amount / (1 + rate);
-            const tax = amount - exclusive;
-            
-            document.getElementById('budget-inclusive').textContent = amount.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('budget-tax').textContent = tax.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('budget-exclusive').textContent = exclusive.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        }
+        
+        
+        
+        
+        
+        
         
         // ==================== 单位换算 ====================
         function updateTonPriceSpec() {
