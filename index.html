@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>我的导航页</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -12,24 +12,25 @@
   --border: #e5e7eb; --primary: #6366f1; --primary-hover: #4f46e5;
   --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-hover: 0 10px 25px rgba(99,102,241,0.15);
   --radius: 12px; --modal-bg: #ffffff; --overlay: rgba(0,0,0,0.4);
-  --danger: #ef4444; --danger-hover: #dc2626; --success: #10b981; --warning: #f59e0b;
+  --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+  /* 动态密度变量 */
+  --card-gap: 16px; --card-pad: 20px; --icon-size: 44px; --font-name: 16px; --font-desc: 13px; --desc-lines: 2;
 }
 [data-theme="dark"] {
   --bg: #0f172a; --bg-card: #1e293b; --text: #f1f5f9; --text-secondary: #94a3b8;
   --border: #334155; --primary: #818cf8; --primary-hover: #6366f1;
   --shadow: 0 1px 3px rgba(0,0,0,0.3); --shadow-hover: 0 10px 25px rgba(129,140,248,0.2);
   --modal-bg: #1e293b; --overlay: rgba(0,0,0,0.7);
-  --danger: #f87171; --danger-hover: #ef4444; --success: #34d399; --warning: #fbbf24;
+  --danger: #f87171; --success: #34d399; --warning: #fbbf24;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; min-height: 100vh; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; min-height: 100vh; user-select: none; }
 
 .header { position: sticky; top: 0; z-index: 100; background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(10px); }
 .header h1 { font-size: 20px; font-weight: 700; background: linear-gradient(135deg, var(--primary), #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: flex; align-items: center; gap: 10px; }
-.sync-status { font-size: 12px; font-weight: normal; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
-.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-secondary); transition: background 0.3s; }
+.sync-status { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-secondary); transition: 0.3s; }
 .sync-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
-
 .header-actions { display: flex; align-items: center; gap: 8px; }
 .icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s; }
 .icon-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
@@ -38,49 +39,57 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { flex-shrink: 0; padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-.tab:hover { color: var(--primary); border-color: var(--primary); }
 .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-.tab .count { display: inline-block; margin-left: 4px; font-size: 11px; opacity: 0.7; }
+.tab .count { font-size: 11px; opacity: 0.7; margin-left: 4px; }
 
 .content { padding: 16px 24px 80px; max-width: 1400px; margin: 0 auto; }
-.view-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.view-list { display: flex; flex-direction: column; gap: 10px; }
-.view-list .card { flex-direction: row; align-items: center; gap: 16px; }
-.view-list .card-icon { width: 40px; height: 40px; font-size: 20px; flex-shrink: 0; }
+.view-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--card-gap); }
+.view-list { display: flex; flex-direction: column; gap: calc(var(--card-gap) * 0.6); }
+.view-list .card { flex-direction: row; align-items: center; }
+.view-list .card-icon { width: var(--icon-size); height: var(--icon-size); font-size: calc(var(--icon-size) * 0.45); flex-shrink: 0; }
 .view-list .card-info { flex: 1; }
+.view-list .card-desc { -webkit-line-clamp: 1; }
 
-.card { display: flex; flex-direction: column; gap: 12px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: all 0.25s ease; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.card { display: flex; flex-direction: column; gap: calc(var(--card-pad) * 0.6); padding: var(--card-pad); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: all 0.25s ease; box-shadow: var(--shadow); position: relative; overflow: hidden; cursor: context-menu; }
 .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), #ec4899); opacity: 0; transition: opacity 0.25s; }
 .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--primary); }
 .card:hover::before { opacity: 1; }
-.card-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; font-weight: 700; flex-shrink: 0; }
+.card-icon { width: var(--icon-size); height: var(--icon-size); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: calc(var(--icon-size) * 0.5); font-weight: 700; flex-shrink: 0; }
 .card-info { min-width: 0; flex: 1; }
-.card-name { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card-desc { font-size: 13px; color: var(--text-secondary); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
-
-.card-delete { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; opacity: 0; transition: all 0.2s; z-index: 10; }
-.card:hover .card-delete { opacity: 1; }
-.card-delete:hover { background: var(--danger); color: #fff; }
+.card-name { font-size: var(--font-name); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-desc { font-size: var(--font-desc); color: var(--text-secondary); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: var(--desc-lines); -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
 
 .fab { position: fixed; bottom: 32px; right: 32px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #ec4899); color: white; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.4); display: flex; align-items: center; justify-content: center; transition: all 0.3s; z-index: 80; }
-.fab:hover { transform: scale(1.1) rotate(90deg); box-shadow: 0 6px 20px rgba(99,102,241,0.6); }
+.fab:hover { transform: scale(1.1) rotate(90deg); }
 
+/* ===== 上下文菜单 ===== */
+.ctx-menu { position: fixed; z-index: 2000; background: var(--modal-bg); border: 1px solid var(--border); border-radius: 12px; padding: 6px; min-width: 180px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: ctxIn 0.15s ease; display: none; }
+.ctx-menu.show { display: block; }
+@keyframes ctxIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.ctx-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; color: var(--text); transition: background 0.15s; }
+.ctx-item:hover { background: var(--bg); }
+.ctx-item.danger { color: var(--danger); }
+.ctx-item.danger:hover { background: #fef2f2; }
+[data-theme="dark"] .ctx-item.danger:hover { background: #450a0a; }
+.ctx-divider { height: 1px; background: var(--border); margin: 4px 8px; }
+
+/* ===== 模态框通用 ===== */
 .modal-overlay { position: fixed; inset: 0; background: var(--overlay); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
 .modal-overlay.show { display: flex; }
 .modal { background: var(--modal-bg); border-radius: 16px; padding: 32px; width: 100%; max-width: 540px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); animation: modalIn 0.25s ease; max-height: 90vh; overflow-y: auto; }
 @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
 .modal h2 { font-size: 20px; }
-.modal h3 { font-size: 15px; margin-bottom: 8px; color: var(--text); }
-.close-btn { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; line-height: 1; padding: 0 4px; }
+.modal h3 { font-size: 15px; margin-bottom: 8px; }
+.close-btn { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; line-height: 1; }
 .close-btn:hover { color: var(--danger); }
-
-.modal .subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+.subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
 .form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
-.form-group input, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s; font-family: inherit; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s; font-family: inherit; }
+.form-group select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
 .form-group textarea { resize: vertical; min-height: 80px; }
-.form-group input:focus, .form-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 .btn { flex: 1; padding: 11px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; min-width: 80px; }
 .btn-primary { background: var(--primary); color: white; }
@@ -88,16 +97,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
 .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
 .btn-danger { background: var(--danger); color: white; }
-.btn-danger:hover { background: var(--danger-hover); }
 .btn-success { background: var(--success); color: white; }
-.btn-success:hover { opacity: 0.9; }
 .btn-warning { background: var(--warning); color: #fff; }
-.btn-warning:hover { opacity: 0.9; }
 .btn-sm { padding: 8px 14px; font-size: 13px; min-width: auto; flex: none; }
 .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
 
-/* 模式切换开关 */
+/* 模式开关 */
 .mode-switch { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--bg); border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
 .mode-switch .mode-label { font-size: 14px; font-weight: 600; flex: 1; }
 .mode-switch .mode-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
@@ -107,45 +113,42 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .slider::before { content: ''; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
 .switch input:checked + .slider { background: var(--success); }
 .switch input:checked + .slider::before { transform: translateX(22px); }
+.online-fields { overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s; }
+.online-fields.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; pointer-events: none; }
 
-.online-fields { overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s, margin 0.3s; }
-.online-fields.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; padding: 0; pointer-events: none; }
+/* 密度滑块 */
+.density-control { padding: 14px 16px; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; }
+.density-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.density-header span { font-size: 14px; font-weight: 600; }
+.density-val { font-size: 12px; color: var(--text-secondary); }
+.density-slider { width: 100%; -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--border); outline: none; }
+.density-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; box-shadow: 0 2px 6px rgba(99,102,241,0.4); }
+.density-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 6px; }
 
 .state-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; text-align: center; color: var(--text-secondary); }
 .state-box .icon { font-size: 48px; margin-bottom: 16px; }
 .state-box .title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-.state-box .desc { font-size: 14px; max-width: 400px; }
-
-.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--border); padding: 12px 24px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 2000; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--border); padding: 12px 24px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 3000; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
 .toast.show { opacity: 1; }
 
-/* 选择弹窗 */
 .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
 .choice-card { padding: 20px 16px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); cursor: pointer; text-align: center; transition: all 0.2s; }
-.choice-card:hover { border-color: var(--primary); background: var(--bg-card); transform: translateY(-2px); }
+.choice-card:hover { border-color: var(--primary); transform: translateY(-2px); }
 .choice-card .choice-icon { font-size: 32px; margin-bottom: 8px; }
 .choice-card .choice-title { font-size: 14px; font-weight: 600; }
 .choice-card .choice-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-
-.text-modal textarea { min-height: 200px; font-family: 'Courier New', monospace; font-size: 13px; }
-
-.sync-info { font-size: 12px; color: var(--text-secondary); padding: 10px 14px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; display: flex; align-items: center; gap: 8px; }
-
+.text-modal textarea { min-height: 200px; font-family: monospace; font-size: 13px; }
+.sync-info { font-size: 12px; color: var(--text-secondary); padding: 10px 14px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; }
 .rls-alert { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; line-height: 1.6; }
 [data-theme="dark"] .rls-alert { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
 .rls-alert code { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all; display: block; margin: 8px 0; }
-.rls-alert button { margin-top: 6px; padding: 6px 12px; background: var(--danger); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+.rls-alert button { margin-top: 6px; padding: 6px 12px; background: var(--danger); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
 
 @media (max-width: 768px) {
-  .header { padding: 12px 16px; }
-  .header h1 { font-size: 18px; }
+  .header { padding: 12px 16px; } .header h1 { font-size: 18px; }
   .tabs-wrapper { padding: 10px 16px; top: 61px; }
   .content { padding: 12px 16px 80px; }
-  .view-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-  .card { padding: 14px; gap: 10px; }
-  .card-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 8px; }
-  .card-name { font-size: 14px; }
-  .card-delete { opacity: 1; width: 24px; height: 24px; font-size: 14px; }
+  .view-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .modal { padding: 24px; }
   .fab { bottom: 24px; right: 24px; width: 50px; height: 50px; font-size: 24px; }
   .sync-status span { display: none; }
@@ -156,123 +159,106 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <body>
 
 <header class="header">
-  <h1>
-    📌 我的导航
-    <div class="sync-status" id="syncStatus">
-      <div class="sync-dot" id="syncDot"></div>
-      <span id="syncText">检测中...</span>
-    </div>
-  </h1>
+  <h1>📌 我的导航 <div class="sync-status" id="syncStatus"><div class="sync-dot" id="syncDot"></div><span id="syncText">检测中...</span></div></h1>
   <div class="header-actions">
     <button class="icon-btn" id="btnView" title="切换视图"><span id="viewIcon">▦</span></button>
     <button class="icon-btn" id="btnTheme" title="切换主题"><span id="themeIcon">🌙</span></button>
-    <button class="icon-btn" id="btnSettings" title="设置与数据管理">⚙️</button>
+    <button class="icon-btn" id="btnSettings" title="设置">⚙️</button>
   </div>
 </header>
-
 <div class="tabs-wrapper"><div class="tabs" id="tabs"></div></div>
-
-<main class="content" id="content">
-  <div class="state-box"><div class="icon">⏳</div><div class="title">加载中...</div></div>
-</main>
-
+<main class="content" id="content"><div class="state-box"><div class="icon">⏳</div><div class="title">加载中...</div></div></main>
 <button class="fab" id="btnAdd" title="添加导航">+</button>
 <div class="toast" id="toast"></div>
 
-<!-- ========== 设置弹窗 ========== -->
+<!-- 上下文菜单 -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" data-action="edit">✏️ 编辑</div>
+  <div class="ctx-item" data-action="move">📂 移动到分组...</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item danger" data-action="delete">🗑️ 删除</div>
+</div>
+
+<!-- 设置弹窗 -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
-    <div class="modal-header">
-      <h2>⚙️ 设置中心</h2>
-      <button class="close-btn" onclick="closeModal('settingsModal')">&times;</button>
-    </div>
-    <p class="subtitle">管理连接模式、数据同步与格式转换。</p>
-
+    <div class="modal-header"><h2>⚙️ 设置中心</h2><button class="close-btn" onclick="closeModal('settingsModal')">&times;</button></div>
+    <p class="subtitle">管理连接、显示密度与数据。</p>
     <div id="rlsAlertContainer"></div>
 
-    <!-- ① 模式切换开关 -->
+    <!-- 模式切换 -->
     <div class="mode-switch">
-      <div>
-        <div class="mode-label" id="modeLabelText">📡 在线模式</div>
-        <div class="mode-desc" id="modeDescText">连接 Supabase 云端数据库同步数据</div>
-      </div>
-      <label class="switch">
-        <input type="checkbox" id="modeToggle" checked>
-        <span class="slider"></span>
-      </label>
+      <div><div class="mode-label" id="modeLabelText">📡 在线模式</div><div class="mode-desc" id="modeDescText">连接 Supabase 云端数据库</div></div>
+      <label class="switch"><input type="checkbox" id="modeToggle" checked><span class="slider"></span></label>
     </div>
-
-    <!-- 在线配置字段（离线时隐藏） -->
     <div class="online-fields" id="onlineFields">
       <div class="form-group"><label>Supabase URL</label><input type="url" id="inputUrl" placeholder="https://xxxxx.supabase.co"></div>
       <div class="form-group"><label>Anon Key</label><input type="text" id="inputKey" placeholder="eyJhbGciOiJIUzI1NiIs..."></div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" id="btnSaveSettings">💾 保存并连接</button>
-      </div>
+      <div class="modal-actions"><button class="btn btn-primary" id="btnSaveSettings">💾 保存并连接</button></div>
     </div>
 
     <hr class="section-divider">
 
-    <!-- ② 本地⇄云端同步 -->
+    <!-- ④ 密度滑块 -->
+    <h3>🎚️ 显示密度</h3>
+    <div class="density-control">
+      <div class="density-header"><span>卡片紧凑度</span><span class="density-val" id="densityVal">标准</span></div>
+      <input type="range" class="density-slider" id="densitySlider" min="0" max="100" value="50">
+      <div class="density-labels"><span>紧凑</span><span>标准</span><span>宽松</span></div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- 数据同步 -->
     <h3>☁️ 数据同步</h3>
-    <p class="subtitle">在本地缓存与云端数据库之间双向同步数据。</p>
     <div class="btn-group">
-      <button class="btn btn-success btn-sm" id="btnUploadToCloud">⬆️ 本地 → 云端</button>
-      <button class="btn btn-warning btn-sm" id="btnDownloadFromCloud">⬇️ 云端 → 本地</button>
+      <button class="btn btn-success btn-sm" id="btnUploadToCloud">⬆️ 本地→云端</button>
+      <button class="btn btn-warning btn-sm" id="btnDownloadFromCloud">⬇️ 云端→本地</button>
     </div>
-    <div class="sync-info">
-      <span>ℹ️</span>
-      <span id="syncInfoText">本地缓存: 0 条 | 模式: --</span>
-    </div>
+    <div class="sync-info" id="syncInfoText">本地缓存: 0 条</div>
 
     <hr class="section-divider">
-
-    <!-- ③④ 数据导入导出 -->
     <h3>📦 数据管理</h3>
-    <p class="subtitle">JSON 支持文件/文本两种方式，Excel 仅支持文件。</p>
     <div class="btn-group">
-      <button class="btn btn-secondary btn-sm" id="btnExportJson">📤 导出 JSON</button>
-      <button class="btn btn-secondary btn-sm" id="btnExportExcel">📤 导出 Excel</button>
+      <button class="btn btn-secondary btn-sm" id="btnExportJson">📤 导出JSON</button>
+      <button class="btn btn-secondary btn-sm" id="btnExportExcel">📤 导出Excel</button>
+      <button class="btn btn-primary btn-sm" id="btnImportJson">📥 导入JSON</button>
+      <button class="btn btn-primary btn-sm" id="btnImportExcel">📥 导入Excel</button>
+      <button class="btn btn-secondary btn-sm" id="btnDownloadTemplate">📋 Excel模板</button>
     </div>
-    <div class="btn-group">
-      <button class="btn btn-primary btn-sm" id="btnImportJson">📥 导入 JSON</button>
-      <button class="btn btn-primary btn-sm" id="btnImportExcel">📥 导入 Excel</button>
-    </div>
-    <div class="btn-group">
-      <button class="btn btn-secondary btn-sm" id="btnDownloadTemplate">📋 下载 Excel 模板</button>
-    </div>
-
     <hr class="section-divider">
-
     <h3>🔄 格式转换</h3>
-    <p class="subtitle">本地直接转换文件，无需连接数据库。</p>
     <div class="btn-group">
-      <button class="btn btn-secondary btn-sm" id="btnJsonToExcel">📄 JSON → Excel</button>
-      <button class="btn btn-secondary btn-sm" id="btnExcelToJson">📊 Excel → JSON</button>
+      <button class="btn btn-secondary btn-sm" id="btnJsonToExcel">JSON→Excel</button>
+      <button class="btn btn-secondary btn-sm" id="btnExcelToJson">Excel→JSON</button>
     </div>
-
     <input type="file" id="fileInputJson" accept=".json" style="display:none;">
     <input type="file" id="fileInputExcel" accept=".xlsx,.xls" style="display:none;">
     <input type="file" id="fileInputConvertJson" accept=".json" style="display:none;">
     <input type="file" id="fileInputConvertExcel" accept=".xlsx,.xls" style="display:none;">
-
-    <div class="modal-actions" style="margin-top:24px;">
-      <button class="btn btn-secondary" onclick="closeModal('settingsModal')">关闭</button>
-    </div>
+    <div class="modal-actions" style="margin-top:24px;"><button class="btn btn-secondary" onclick="closeModal('settingsModal')">关闭</button></div>
   </div>
 </div>
 
-<!-- ========== 添加弹窗 ========== -->
+<!-- 添加/编辑弹窗 -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
-    <div class="modal-header">
-      <h2>➕ 添加导航</h2>
-      <button class="close-btn" onclick="closeModal('addModal')">&times;</button>
-    </div>
-    <p class="subtitle">新增记录将立即同步到数据库或本地。</p>
+    <div class="modal-header"><h2 id="addModalTitle">➕ 添加导航</h2><button class="close-btn" onclick="closeModal('addModal')">&times;</button></div>
+    <p class="subtitle" id="addModalSubtitle">新增记录将立即同步。</p>
+    <input type="hidden" id="editId">
     <div class="form-group"><label>名称 *</label><input type="text" id="addName" placeholder="如：百度"></div>
     <div class="form-group"><label>网址 *</label><input type="url" id="addUrl" placeholder="https://baidu.com"></div>
-    <div class="form-group"><label>分类</label><input type="text" id="addCategory" placeholder="如：常用工具"></div>
+    <!-- ③ 分类下拉+自定义 -->
+    <div class="form-group">
+      <label>分类</label>
+      <select id="addCategorySelect">
+        <option value="">-- 请选择或输入新分类 --</option>
+      </select>
+    </div>
+    <div class="form-group" id="customCatGroup" style="display:none;">
+      <label>自定义分类名称</label>
+      <input type="text" id="addCategoryCustom" placeholder="输入新的分类名称">
+    </div>
     <div class="form-group"><label>描述</label><textarea id="addDesc" placeholder="简短描述..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('addModal')">取消</button>
@@ -281,28 +267,40 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </div>
 
-<!-- ========== 选择方式弹窗 ========== -->
+<!-- 移动分组弹窗 -->
+<div class="modal-overlay" id="moveModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header"><h2>📂 移动到分组</h2><button class="close-btn" onclick="closeModal('moveModal')">&times;</button></div>
+    <p class="subtitle">选择目标分组，或创建新分组。</p>
+    <input type="hidden" id="moveItemId">
+    <div class="form-group">
+      <label>目标分组</label>
+      <select id="moveTargetSelect"></select>
+    </div>
+    <div class="form-group" id="moveCustomGroup" style="display:none;">
+      <label>新分组名称</label>
+      <input type="text" id="moveCustomCat" placeholder="输入新分组名">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('moveModal')">取消</button>
+      <button class="btn btn-primary" id="btnConfirmMove">确认移动</button>
+    </div>
+  </div>
+</div>
+
+<!-- 选择方式弹窗 -->
 <div class="modal-overlay" id="choiceModal">
   <div class="modal" style="max-width:420px;">
-    <div class="modal-header">
-      <h2 id="choiceTitle">选择方式</h2>
-      <button class="close-btn" onclick="closeModal('choiceModal')">&times;</button>
-    </div>
+    <div class="modal-header"><h2 id="choiceTitle">选择方式</h2><button class="close-btn" onclick="closeModal('choiceModal')">&times;</button></div>
     <div class="choice-grid" id="choiceGrid"></div>
   </div>
 </div>
 
-<!-- ========== 文本导入弹窗 ========== -->
+<!-- 文本导入弹窗 -->
 <div class="modal-overlay" id="textImportModal">
   <div class="modal text-modal">
-    <div class="modal-header">
-      <h2>📋 粘贴 JSON 文本</h2>
-      <button class="close-btn" onclick="closeModal('textImportModal')">&times;</button>
-    </div>
-    <p class="subtitle">将 JSON 数组文本粘贴到下方，然后点击确认导入。</p>
-    <div class="form-group">
-      <textarea id="textImportArea" placeholder='[{"name":"示例","url":"https://example.com","category":"工具","description":"描述"}]'></textarea>
-    </div>
+    <div class="modal-header"><h2>📋 粘贴 JSON</h2><button class="close-btn" onclick="closeModal('textImportModal')">&times;</button></div>
+    <div class="form-group"><textarea id="textImportArea" placeholder='[{"name":"示例","url":"https://example.com"}]'></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('textImportModal')">取消</button>
       <button class="btn btn-primary" id="btnConfirmTextImport">确认导入</button>
@@ -310,564 +308,370 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </div>
 
-<!-- ========== 文本导出弹窗 ========== -->
+<!-- 文本导出弹窗 -->
 <div class="modal-overlay" id="textExportModal">
   <div class="modal text-modal">
-    <div class="modal-header">
-      <h2>📋 JSON 文本预览</h2>
-      <button class="close-btn" onclick="closeModal('textExportModal')">&times;</button>
-    </div>
-    <p class="subtitle">可手动选中复制，或点击下方按钮一键复制。</p>
-    <div class="form-group">
-      <textarea id="textExportArea" readonly></textarea>
-    </div>
+    <div class="modal-header"><h2>📋 JSON 预览</h2><button class="close-btn" onclick="closeModal('textExportModal')">&times;</button></div>
+    <div class="form-group"><textarea id="textExportArea" readonly></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('textExportModal')">关闭</button>
-      <button class="btn btn-primary" id="btnCopyTextExport">📋 复制到剪贴板</button>
+      <button class="btn btn-primary" id="btnCopyTextExport">📋 复制</button>
     </div>
   </div>
 </div>
 
 <script>
-// ==================== 全局状态 ====================
+// ==================== 状态 ====================
 const state = {
-  allData: [],
-  currentCategory: '全部',
-  viewMode: localStorage.getItem('viewMode') || 'grid',
-  theme: localStorage.getItem('theme') || 'light',
-  categories: [],
-  isOnline: false,
-  mode: localStorage.getItem('nav_mode') || 'online' // 'online' | 'offline'
+  allData: [], currentCategory: '全部', viewMode: localStorage.getItem('viewMode') || 'grid',
+  theme: localStorage.getItem('theme') || 'light', categories: [], isOnline: false,
+  mode: localStorage.getItem('nav_mode') || 'online',
+  density: parseInt(localStorage.getItem('nav_density') || '50'),
+  ctxItem: null // 当前右键操作的条目
 };
-
 const $ = id => document.getElementById(id);
-const content = $('content');
-const tabsEl = $('tabs');
 const LOCAL_KEY = 'nav_local_data';
 
-// ==================== 工具函数 ====================
-function showToast(msg, duration = 3000) {
-  const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
-}
-function escapeHtml(s) {
-  return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') : '';
-}
-function getConfig() {
-  return { url: localStorage.getItem('sb_url') || '', key: localStorage.getItem('sb_key') || '' };
-}
-function getClient() {
-  const { url, key } = getConfig();
-  if (!url || !key) throw new Error('未配置数据库连接');
-  if (!window.supabase) throw new Error('SDK 未加载');
-  return window.supabase.createClient(url, key);
-}
-function dateStr() { return new Date().toISOString().slice(0, 10); }
-function downloadFile(blob, filename) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-  URL.revokeObjectURL(a.href);
-}
-function saveLocalData(data) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); }
-function getLocalData() { try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch { return []; } }
-
+// ==================== 工具 ====================
+function showToast(msg, d=3000) { const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
+function escapeHtml(s) { return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'):''; }
+function getConfig() { return {url:localStorage.getItem('sb_url')||'', key:localStorage.getItem('sb_key')||''}; }
+function getClient() { const{url,key}=getConfig(); if(!url||!key)throw new Error('未配置'); if(!window.supabase)throw new Error('SDK未加载'); return window.supabase.createClient(url,key); }
+function dateStr() { return new Date().toISOString().slice(0,10); }
+function downloadFile(blob,name) { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+function saveLocalData(d) { localStorage.setItem(LOCAL_KEY,JSON.stringify(d)); }
+function getLocalData() { try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'[]')}catch{return[]} }
 function openModal(id) { $(id).classList.add('show'); }
 function closeModal(id) { $(id).classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show')}));
 
-// 点击遮罩关闭所有弹窗
-document.querySelectorAll('.modal-overlay').forEach(el => {
-  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
-});
+// ==================== ④ 密度滑块 ====================
+function applyDensity(val) {
+  // val: 0(紧凑) ~ 100(宽松)
+  const gap = 8 + (val / 100) * 20;       // 8~28px
+  const pad = 12 + (val / 100) * 16;      // 12~28px
+  const icon = 32 + (val / 100) * 20;     // 32~52px
+  const fName = 13 + (val / 100) * 5;     // 13~18px
+  const fDesc = 11 + (val / 100) * 4;     // 11~15px
+  const lines = val < 33 ? 1 : val < 66 ? 2 : 3;
+  const r = document.documentElement.style;
+  r.setProperty('--card-gap', gap+'px');
+  r.setProperty('--card-pad', pad+'px');
+  r.setProperty('--icon-size', icon+'px');
+  r.setProperty('--font-name', fName+'px');
+  r.setProperty('--font-desc', fDesc+'px');
+  r.setProperty('--desc-lines', lines);
+  const labels = ['紧凑','较紧凑','标准','较宽松','宽松'];
+  $('densityVal').textContent = labels[Math.min(4, Math.floor(val/20))];
+}
+$('densitySlider').value = state.density;
+applyDensity(state.density);
+$('densitySlider').oninput = function() {
+  state.density = parseInt(this.value);
+  localStorage.setItem('nav_density', state.density);
+  applyDensity(state.density);
+};
 
-// ==================== ① 模式切换逻辑 ====================
+// ==================== 模式切换 ====================
 function updateModeUI() {
-  const isOnline = state.mode === 'online';
-  $('modeToggle').checked = isOnline;
-  $('modeLabelText').textContent = isOnline ? '📡 在线模式' : '💾 离线模式';
-  $('modeDescText').textContent = isOnline
-    ? '连接 Supabase 云端数据库同步数据'
-    : '仅使用浏览器本地存储，不发起任何网络请求';
-  const fields = $('onlineFields');
-  if (isOnline) {
-    fields.classList.remove('hidden');
-    fields.style.maxHeight = '300px';
-  } else {
-    fields.classList.add('hidden');
-  }
+  const on = state.mode==='online';
+  $('modeToggle').checked = on;
+  $('modeLabelText').textContent = on?'📡 在线模式':'💾 离线模式';
+  $('modeDescText').textContent = on?'连接 Supabase 云端数据库':'仅使用浏览器本地存储';
+  const f=$('onlineFields');
+  if(on){f.classList.remove('hidden');f.style.maxHeight='300px'}else{f.classList.add('hidden')}
 }
-
 $('modeToggle').onchange = () => {
-  state.mode = $('modeToggle').checked ? 'online' : 'offline';
+  state.mode = $('modeToggle').checked?'online':'offline';
   localStorage.setItem('nav_mode', state.mode);
-  updateModeUI();
-  updateSyncInfo();
-  if (state.mode === 'offline') {
-    updateSyncStatus(false, '离线模式');
-    state.allData = getLocalData();
-    renderAll();
-    showToast('💾 已切换为离线模式');
-  } else {
-    loadData(true);
-    showToast('📡 已切换为在线模式');
-  }
+  updateModeUI(); updateSyncInfo();
+  if(state.mode==='offline'){updateSyncStatus(false,'离线模式');state.allData=getLocalData();renderAll();showToast('💾 已切换离线模式')}
+  else{loadData(true);showToast('📡 已切换在线模式')}
 };
 
-// ==================== 状态指示器 ====================
-function updateSyncStatus(online, text) {
-  state.isOnline = online;
-  const dot = $('syncDot');
-  const txt = $('syncText');
-  if (online) {
-    dot.classList.add('online');
-    txt.textContent = text || '云端同步';
-  } else {
-    dot.classList.remove('online');
-    txt.textContent = text || '离线模式';
-  }
-}
+// ==================== 状态指示 ====================
+function updateSyncStatus(on,text) { state.isOnline=on; const d=$('syncDot'),t=$('syncText'); if(on){d.classList.add('online');t.textContent=text||'云端同步'}else{d.classList.remove('online');t.textContent=text||'离线模式'} }
+function updateSyncInfo() { $('syncInfoText').textContent=`本地缓存: ${getLocalData().length} 条 | 模式: ${state.mode==='online'?'📡在线':'💾离线'}`; }
 
-function updateSyncInfo() {
-  const local = getLocalData();
-  $('syncInfoText').textContent = `本地缓存: ${local.length} 条 | 当前模式: ${state.mode === 'online' ? '📡 在线' : '💾 离线'}`;
-}
-
-// ==================== 主题 & 视图 ====================
-function applyTheme() {
-  document.documentElement.setAttribute('data-theme', state.theme);
-  $('themeIcon').textContent = state.theme === 'dark' ? '☀️' : '🌙';
-}
-function applyView() { $('viewIcon').textContent = state.viewMode === 'grid' ? '▦' : '☰'; }
+// ==================== 主题&视图 ====================
+function applyTheme() { document.documentElement.setAttribute('data-theme',state.theme); $('themeIcon').textContent=state.theme==='dark'?'☀️':'🌙'; }
+function applyView() { $('viewIcon').textContent=state.viewMode==='grid'?'▦':'☰'; }
 applyTheme(); applyView();
-$('btnTheme').onclick = () => { state.theme = state.theme === 'light' ? 'dark' : 'light'; localStorage.setItem('theme', state.theme); applyTheme(); };
-$('btnView').onclick = () => { state.viewMode = state.viewMode === 'grid' ? 'list' : 'grid'; localStorage.setItem('viewMode', state.viewMode); applyView(); renderContent(); };
+$('btnTheme').onclick=()=>{state.theme=state.theme==='light'?'dark':'light';localStorage.setItem('theme',state.theme);applyTheme()};
+$('btnView').onclick=()=>{state.viewMode=state.viewMode==='grid'?'list':'grid';localStorage.setItem('viewMode',state.viewMode);applyView();renderContent()};
 
-// ==================== 设置弹窗 ====================
-function openSettings() {
-  const c = getConfig();
-  $('inputUrl').value = c.url;
-  $('inputKey').value = c.key;
-  $('rlsAlertContainer').innerHTML = '';
-  updateModeUI();
-  updateSyncInfo();
-  openModal('settingsModal');
+// ==================== 设置 ====================
+function openSettings() { const c=getConfig(); $('inputUrl').value=c.url; $('inputKey').value=c.key; $('rlsAlertContainer').innerHTML=''; updateModeUI(); updateSyncInfo(); $('densitySlider').value=state.density; applyDensity(state.density); openModal('settingsModal'); }
+$('btnSettings').onclick=openSettings;
+$('btnSaveSettings').onclick=async()=>{const u=$('inputUrl').value.trim().replace(/\/+$/,''),k=$('inputKey').value.trim();if(!u||!k){showToast('❌ 请填写完整');return}localStorage.setItem('sb_url',u);localStorage.setItem('sb_key',k);closeModal('settingsModal');await loadData(true)};
+
+// ==================== ③ 分类下拉构建 ====================
+function buildCategorySelect(selectEl, customGroupEl, customInputEl, selectedCat) {
+  const cats = [...new Set(state.allData.map(d=>d.category||'未分类'))].sort();
+  selectEl.innerHTML = '<option value="__custom__">✏️ 新建分类...</option>' +
+    cats.map(c=>`<option value="${escapeHtml(c)}" ${c===selectedCat?'selected':''}>${escapeHtml(c)}</option>`).join('');
+  
+  const toggleCustom = () => {
+    const isCustom = selectEl.value === '__custom__';
+    customGroupEl.style.display = isCustom ? 'block' : 'none';
+    if(isCustom) customInputEl.focus();
+  };
+  selectEl.onchange = toggleCustom;
+  toggleCustom();
 }
-$('btnSettings').onclick = openSettings;
 
-$('btnSaveSettings').onclick = async () => {
-  const url = $('inputUrl').value.trim().replace(/\/+$/, '');
-  const key = $('inputKey').value.trim();
-  if (!url || !key) { showToast('❌ 请填写完整的 URL 和 Key'); return; }
-  localStorage.setItem('sb_url', url);
-  localStorage.setItem('sb_key', key);
-  closeModal('settingsModal');
-  await loadData(true);
-};
+function getSelectedCategory(selectEl, customInputEl) {
+  if(selectEl.value === '__custom__') {
+    const v = customInputEl.value.trim();
+    return v || '未分类';
+  }
+  return selectEl.value || '未分类';
+}
 
-// ==================== 添加导航 ====================
+// ==================== 添加/编辑 ====================
 $('btnAdd').onclick = () => {
-  $('addName').value = ''; $('addUrl').value = ''; $('addCategory').value = ''; $('addDesc').value = '';
+  $('editId').value = '';
+  $('addModalTitle').textContent = '➕ 添加导航';
+  $('addModalSubtitle').textContent = '新增记录将立即同步。';
+  $('addName').value=''; $('addUrl').value=''; $('addDesc').value='';
+  $('addCategoryCustom').value='';
+  buildCategorySelect($('addCategorySelect'), $('customCatGroup'), $('addCategoryCustom'), '');
   openModal('addModal');
 };
 
+function openEditModal(item) {
+  $('editId').value = item.id;
+  $('addModalTitle').textContent = '✏️ 编辑导航';
+  $('addModalSubtitle').textContent = '修改后自动同步。';
+  $('addName').value = item.name||'';
+  $('addUrl').value = item.url||'';
+  $('addDesc').value = item.description||'';
+  $('addCategoryCustom').value='';
+  buildCategorySelect($('addCategorySelect'), $('customCatGroup'), $('addCategoryCustom'), item.category||'未分类');
+  openModal('addModal');
+}
+
 $('btnSaveAdd').onclick = async () => {
-  const name = $('addName').value.trim();
-  const url = $('addUrl').value.trim();
-  const category = $('addCategory').value.trim() || '未分类';
-  const description = $('addDesc').value.trim();
-  if (!name || !url) { showToast('❌ 名称和网址为必填'); return; }
+  const name=$('addName').value.trim(), url=$('addUrl').value.trim();
+  const category = getSelectedCategory($('addCategorySelect'), $('addCategoryCustom'));
+  const description=$('addDesc').value.trim();
+  const editId = $('editId').value;
+  if(!name||!url){showToast('❌ 名称和网址必填');return}
 
-  const newItem = { name, url, category, description, is_active: true };
-
-  if (state.isOnline) {
-    try {
-      const { error } = await getClient().from('nav_links').insert(newItem);
-      if (error) throw error;
-      showToast('✅ 已同步到云端');
-      closeModal('addModal');
-      loadData();
-    } catch (err) { handleDbError(err, '添加'); }
+  if(editId) {
+    // 编辑模式
+    if(state.isOnline && typeof Number(editId)==='number' && !String(editId).startsWith('local_')) {
+      try {
+        const{error}=await getClient().from('nav_links').update({name,url,category,description}).eq('id',editId);
+        if(error)throw error;
+        showToast('✅ 已更新到云端');
+      } catch(err){handleDbError(err,'更新');return}
+    }
+    // 更新本地
+    let local=getLocalData();
+    const idx=local.findIndex(i=>String(i.id)===String(editId));
+    if(idx>=0){local[idx]={...local[idx],name,url,category,description};saveLocalData(local)}
+    state.allData=state.isOnline?state.allData.map(i=>String(i.id)===String(editId)?{...i,name,url,category,description}:i):local;
+    closeModal('addModal'); renderAll(); showToast('✅ 已保存');
   } else {
-    const localData = getLocalData();
-    newItem.id = 'local_' + Date.now();
-    localData.push(newItem);
-    saveLocalData(localData);
-    state.allData = localData;
-    showToast('✅ 已保存到本地');
-    closeModal('addModal');
-    renderAll();
+    // 新增模式
+    const newItem={name,url,category,description,is_active:true};
+    if(state.isOnline){
+      try{const{error}=await getClient().from('nav_links').insert(newItem);if(error)throw error;showToast('✅ 已同步云端');closeModal('addModal');loadData()}
+      catch(err){handleDbError(err,'添加')}
+    } else {
+      const local=getLocalData(); newItem.id='local_'+Date.now(); local.push(newItem); saveLocalData(local);
+      state.allData=local; closeModal('addModal'); renderAll(); showToast('✅ 已保存到本地');
+    }
   }
+};
+
+// ==================== ①② 上下文菜单（右键/长按） ====================
+let longPressTimer = null;
+const ctxMenu = $('ctxMenu');
+
+function showCtxMenu(x, y, item) {
+  state.ctxItem = item;
+  ctxMenu.classList.add('show');
+  // 边界修正
+  const mw=ctxMenu.offsetWidth, mh=ctxMenu.offsetHeight;
+  const ww=window.innerWidth, wh=window.innerHeight;
+  ctxMenu.style.left = Math.min(x, ww-mw-10)+'px';
+  ctxMenu.style.top = Math.min(y, wh-mh-10)+'px';
+}
+
+function hideCtxMenu() { ctxMenu.classList.remove('show'); state.ctxItem=null; }
+
+// 全局点击隐藏菜单
+document.addEventListener('click', e => {
+  if(!ctxMenu.contains(e.target)) hideCtxMenu();
+});
+document.addEventListener('contextmenu', e => {
+  const card = e.target.closest('.card');
+  if(card) { e.preventDefault(); } else { hideCtxMenu(); }
+});
+
+// 绑定卡片事件（委托）
+content.addEventListener('contextmenu', e => {
+  const card = e.target.closest('.card');
+  if(!card) return;
+  e.preventDefault();
+  const id = card.dataset.id;
+  const item = state.allData.find(i=>String(i.id)===String(id));
+  if(item) showCtxMenu(e.clientX, e.clientY, item);
+});
+
+// 长按支持（移动端）
+content.addEventListener('touchstart', e => {
+  const card = e.target.closest('.card');
+  if(!card) return;
+  longPressTimer = setTimeout(() => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const id = card.dataset.id;
+    const item = state.allData.find(i=>String(i.id)===String(id));
+    if(item) showCtxMenu(touch.clientX, touch.clientY, item);
+  }, 600);
+}, {passive:false});
+content.addEventListener('touchend', ()=>clearTimeout(longPressTimer));
+content.addEventListener('touchmove', ()=>clearTimeout(longPressTimer));
+
+// 菜单项点击
+ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
+  el.onclick = () => {
+    const action = el.dataset.action;
+    const item = state.ctxItem;
+    hideCtxMenu();
+    if(!item) return;
+    if(action==='edit') openEditModal(item);
+    else if(action==='delete') deleteLink(item.id, item.name);
+    else if(action==='move') openMoveModal(item);
+  };
+});
+
+// ==================== ② 移动分组 ====================
+function openMoveModal(item) {
+  $('moveItemId').value = item.id;
+  $('moveCustomCat').value = '';
+  buildCategorySelect($('moveTargetSelect'), $('moveCustomGroup'), $('moveCustomCat'), item.category||'未分类');
+  openModal('moveModal');
+}
+
+$('btnConfirmMove').onclick = async () => {
+  const id = $('moveItemId').value;
+  const newCat = getSelectedCategory($('moveTargetSelect'), $('moveCustomCat'));
+  if(!id) return;
+
+  if(state.isOnline && !String(id).startsWith('local_')) {
+    try {
+      const{error}=await getClient().from('nav_links').update({category:newCat}).eq('id',id);
+      if(error)throw error;
+      showToast(`✅ 已移动到「${newCat}」`);
+    } catch(err){handleDbError(err,'移动');return}
+  }
+  // 更新本地
+  let local=getLocalData();
+  const idx=local.findIndex(i=>String(i.id)===String(id));
+  if(idx>=0){local[idx].category=newCat;saveLocalData(local)}
+  state.allData=state.isOnline?state.allData.map(i=>String(i.id)===String(id)?{...i,category:newCat}:i):local;
+  closeModal('moveModal'); renderAll();
+  if(!state.isOnline) showToast(`✅ 已移动到「${newCat}」`);
 };
 
 // ==================== 删除 ====================
-async function deleteLink(id, name) {
-  if (!confirm(`确定删除「${name}」吗？`)) return;
-  if (state.isOnline && typeof id === 'number') {
-    try {
-      const { error } = await getClient().from('nav_links').delete().eq('id', id);
-      if (error) throw error;
-      showToast('✅ 已删除');
-      loadData();
-    } catch (err) { handleDbError(err, '删除'); }
+async function deleteLink(id,name) {
+  if(!confirm(`确定删除「${name}」吗？`))return;
+  if(state.isOnline&&!String(id).startsWith('local_')){
+    try{const{error}=await getClient().from('nav_links').delete().eq('id',id);if(error)throw error;showToast('✅ 已删除');loadData()}
+    catch(err){handleDbError(err,'删除')}
   } else {
-    let localData = getLocalData();
-    localData = localData.filter(i => String(i.id) !== String(id));
-    saveLocalData(localData);
-    state.allData = localData;
-    showToast('✅ 已从本地删除');
-    renderAll();
+    let local=getLocalData();local=local.filter(i=>String(i.id)!==String(id));saveLocalData(local);
+    state.allData=local;renderAll();showToast('✅ 已从本地删除');
   }
 }
 
-// ==================== RLS 错误处理 ====================
-function handleDbError(err, action) {
-  console.error(err);
-  const msg = err.message || '';
-  if (msg.includes('row-level security') || msg.includes('permission denied')) {
-    const sql = `CREATE POLICY "Allow public insert" ON nav_links FOR INSERT WITH CHECK (true);\nCREATE POLICY "Allow public delete" ON nav_links FOR DELETE USING (true);`;
-    $('rlsAlertContainer').innerHTML = `
-      <div class="rls-alert">
-        <strong>⚠️ 数据库权限被拒绝 (RLS)</strong><br>
-        ${action}失败，请复制以下 SQL 到 Supabase SQL Editor 执行：
-        <code>${sql}</code>
-        <button onclick="navigator.clipboard.writeText(\`${sql}\`);this.textContent='已复制 SQL';">复制 SQL 语句</button>
-      </div>`;
-    openSettings();
-    showToast(`❌ ${action}失败：权限不足`);
-  } else {
-    showToast(`❌ ${action}失败: ` + msg);
-  }
+// ==================== RLS ====================
+function handleDbError(err,action) {
+  console.error(err);const msg=err.message||'';
+  if(msg.includes('row-level security')||msg.includes('permission denied')){
+    const sql=`CREATE POLICY "Allow public insert" ON nav_links FOR INSERT WITH CHECK (true);\nCREATE POLICY "Allow public delete" ON nav_links FOR DELETE USING (true);\nCREATE POLICY "Allow public update" ON nav_links FOR UPDATE USING (true);`;
+    $('rlsAlertContainer').innerHTML=`<div class="rls-alert"><strong>⚠️ RLS权限拒绝</strong><br>${action}失败，请执行以下SQL：<code>${sql}</code><button onclick="navigator.clipboard.writeText(\`${sql}\`);this.textContent='已复制'">复制SQL</button></div>`;
+    openSettings();showToast(`❌ ${action}失败：权限不足`);
+  } else showToast(`❌ ${action}失败: `+msg);
 }
 
-// ==================== 选择弹窗系统 ====================
-function showChoice(title, options) {
-  $('choiceTitle').textContent = title;
-  $('choiceGrid').innerHTML = options.map((opt, i) => `
-    <div class="choice-card" data-index="${i}">
-      <div class="choice-icon">${opt.icon}</div>
-      <div class="choice-title">${opt.title}</div>
-      <div class="choice-desc">${opt.desc}</div>
-    </div>
-  `).join('');
-  $('choiceGrid').querySelectorAll('.choice-card').forEach(card => {
-    card.onclick = () => {
-      closeModal('choiceModal');
-      const idx = parseInt(card.dataset.index);
-      if (options[idx].action) options[idx].action();
-    };
-  });
+// ==================== 导入导出 ====================
+function showChoice(title,opts) {
+  $('choiceTitle').textContent=title;
+  $('choiceGrid').innerHTML=opts.map((o,i)=>`<div class="choice-card" data-i="${i}"><div class="choice-icon">${o.icon}</div><div class="choice-title">${o.title}</div><div class="choice-desc">${o.desc}</div></div>`).join('');
+  $('choiceGrid').querySelectorAll('.choice-card').forEach(c=>{c.onclick=()=>{closeModal('choiceModal');opts[parseInt(c.dataset.i)].action()}});
   openModal('choiceModal');
 }
 
-// ==================== ③ 导出 JSON（文件 / 剪贴板 / 文本预览） ====================
-$('btnExportJson').onclick = () => {
-  if (!state.allData.length) { showToast('⚠️ 暂无数据可导出'); return; }
-  showChoice('导出 JSON', [
-    {
-      icon: '📁', title: '导出文件', desc: '下载 .json 文件到本地',
-      action: () => {
-        downloadFile(new Blob([JSON.stringify(state.allData, null, 2)], {type:'application/json'}), `nav_${dateStr()}.json`);
-        showToast('✅ JSON 文件已下载');
-      }
-    },
-    {
-      icon: '📋', title: '复制到剪贴板', desc: '一键复制 JSON 文本',
-      action: () => {
-        const text = JSON.stringify(state.allData, null, 2);
-        navigator.clipboard.writeText(text).then(() => {
-          showToast('✅ JSON 已复制到剪贴板');
-        }).catch(() => {
-          $('textExportArea').value = text;
-          openModal('textExportModal');
-        });
-      }
-    },
-    {
-      icon: '📝', title: '显示文本', desc: '在弹窗中查看并手动复制',
-      action: () => {
-        $('textExportArea').value = JSON.stringify(state.allData, null, 2);
-        openModal('textExportModal');
-      }
-    }
-  ]);
-};
-
-$('btnCopyTextExport').onclick = () => {
-  const area = $('textExportArea');
-  area.select();
-  navigator.clipboard.writeText(area.value).then(() => {
-    showToast('✅ 已复制到剪贴板');
-  }).catch(() => {
-    document.execCommand('copy');
-    showToast('✅ 已复制');
-  });
-};
-
-// ==================== ④ 导入 JSON（文件 / 文本粘贴） ====================
-$('btnImportJson').onclick = () => {
-  showChoice('导入 JSON', [
-    {
-      icon: '📁', title: '从文件导入', desc: '选择本地 .json 文件',
-      action: () => $('fileInputJson').click()
-    },
-    {
-      icon: '📋', title: '从文本导入', desc: '粘贴 JSON 文本内容',
-      action: () => {
-        $('textImportArea').value = '';
-        openModal('textImportModal');
-      }
-    }
-  ]);
-};
-
-// 文件导入 JSON
-$('fileInputJson').onchange = async (e) => {
-  const f = e.target.files[0]; if(!f) return;
-  try {
-    const items = JSON.parse(await f.text());
-    if (!Array.isArray(items)) throw new Error('JSON 必须为数组格式');
-    const n = await batchInsert(items);
-    showToast(`✅ 成功导入 ${n} 条`);
-    closeModal('settingsModal');
-    loadData();
-  } catch(err) { handleDbError(err, '导入'); }
-  e.target.value = '';
-};
-
-// 文本导入 JSON 确认
-$('btnConfirmTextImport').onclick = async () => {
-  const text = $('textImportArea').value.trim();
-  if (!text) { showToast('❌ 请粘贴 JSON 内容'); return; }
-  try {
-    const items = JSON.parse(text);
-    if (!Array.isArray(items)) throw new Error('JSON 必须为数组格式');
-    const n = await batchInsert(items);
-    showToast(`✅ 成功导入 ${n} 条`);
-    closeModal('textImportModal');
-    closeModal('settingsModal');
-    loadData();
-  } catch(err) {
-    showToast('❌ 解析失败: ' + err.message);
-  }
-};
-
-// ==================== 导出 / 导入 Excel ====================
-$('btnExportExcel').onclick = () => {
-  if (!state.allData.length || typeof XLSX === 'undefined') { showToast('⚠️ 无数据或库未加载'); return; }
-  const ws = XLSX.utils.json_to_sheet(state.allData.map(d => ({name:d.name, url:d.url, category:d.category||'', description:d.description||''})));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '导航');
-  XLSX.writeFile(wb, `nav_${dateStr()}.xlsx`);
-  showToast('✅ Excel 导出成功');
-};
-
-$('btnImportExcel').onclick = () => $('fileInputExcel').click();
-$('fileInputExcel').onchange = async (e) => {
-  const f = e.target.files[0]; if(!f || typeof XLSX === 'undefined') return;
-  try {
-    const wb = XLSX.read(await f.arrayBuffer(), {type:'array'});
-    const items = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-    const n = await batchInsert(items);
-    showToast(`✅ 导入 ${n} 条`);
-    closeModal('settingsModal');
-    loadData();
-  } catch(err) { handleDbError(err, '导入'); }
-  e.target.value = '';
-};
-
-$('btnDownloadTemplate').onclick = () => {
-  if (typeof XLSX === 'undefined') return;
-  const ws = XLSX.utils.json_to_sheet([{name:'示例',url:'https://example.com',category:'工具',description:'描述'}]);
-  ws['!cols'] = [{wch:20},{wch:40},{wch:15},{wch:30}];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '模板');
-  XLSX.writeFile(wb, 'nav_template.xlsx');
-  showToast('✅ 模板已下载');
-};
-
-// ==================== 批量插入 ====================
+$('btnExportJson').onclick=()=>{if(!state.allData.length){showToast('⚠️ 无数据');return}showChoice('导出JSON',[{icon:'📁',title:'导出文件',desc:'下载.json',action:()=>{downloadFile(new Blob([JSON.stringify(state.allData,null,2)],{type:'application/json'}),`nav_${dateStr()}.json`);showToast('✅ 已下载')}},{icon:'📋',title:'复制到剪贴板',desc:'一键复制',action:()=>{navigator.clipboard.writeText(JSON.stringify(state.allData,null,2)).then(()=>showToast('✅ 已复制')).catch(()=>{$('textExportArea').value=JSON.stringify(state.allData,null,2);openModal('textExportModal')})}},{icon:'📝',title:'显示文本',desc:'手动复制',action:()=>{$('textExportArea').value=JSON.stringify(state.allData,null,2);openModal('textExportModal')}}])};
+$('btnCopyTextExport').onclick=()=>{const a=$('textExportArea');a.select();navigator.clipboard.writeText(a.value).then(()=>showToast('✅ 已复制')).catch(()=>{document.execCommand('copy');showToast('✅ 已复制')})};
+$('btnImportJson').onclick=()=>showChoice('导入JSON',[{icon:'📁',title:'从文件',desc:'选择.json',action:()=>$('fileInputJson').click()},{icon:'📋',title:'从文本',desc:'粘贴JSON',action:()=>{$('textImportArea').value='';openModal('textImportModal')}}]);
+$('fileInputJson').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const n=await batchInsert(JSON.parse(await f.text()));showToast(`✅ 导入${n}条`);closeModal('settingsModal');loadData()}catch(err){handleDbError(err,'导入')}e.target.value=''};
+$('btnConfirmTextImport').onclick=async()=>{const t=$('textImportArea').value.trim();if(!t){showToast('❌ 请粘贴内容');return}try{const n=await batchInsert(JSON.parse(t));showToast(`✅ 导入${n}条`);closeModal('textImportModal');closeModal('settingsModal');loadData()}catch(err){showToast('❌ '+err.message)}};
+$('btnExportExcel').onclick=()=>{if(!state.allData.length||typeof XLSX==='undefined')return;const ws=XLSX.utils.json_to_sheet(state.allData.map(d=>({name:d.name,url:d.url,category:d.category||'',description:d.description||''})));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'导航');XLSX.writeFile(wb,`nav_${dateStr()}.xlsx`);showToast('✅ Excel已导出')};
+$('btnImportExcel').onclick=()=>$('fileInputExcel').click();
+$('fileInputExcel').onchange=async e=>{const f=e.target.files[0];if(!f||typeof XLSX==='undefined')return;try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const n=await batchInsert(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));showToast(`✅ 导入${n}条`);closeModal('settingsModal');loadData()}catch(err){handleDbError(err,'导入')}e.target.value=''};
+$('btnDownloadTemplate').onclick=()=>{if(typeof XLSX==='undefined')return;const ws=XLSX.utils.json_to_sheet([{name:'示例',url:'https://example.com',category:'工具',description:'描述'}]);ws['!cols']=[{wch:20},{wch:40},{wch:15},{wch:30}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'模板');XLSX.writeFile(wb,'nav_template.xlsx')};
 async function batchInsert(items) {
-  const valid = items.filter(i => i.name && i.url).map(i => ({
-    name: String(i.name).trim(), url: String(i.url).trim(),
-    category: String(i.category || '未分类').trim(), description: String(i.description || '').trim(), is_active: true
-  }));
-  if (!valid.length) throw new Error('没有有效记录（需包含 name 和 url）');
-
-  if (state.isOnline) {
-    const { error } = await getClient().from('nav_links').insert(valid);
-    if (error) throw error;
-  }
-  // 无论在线离线都写入本地缓存
-  const localData = getLocalData();
-  valid.forEach(i => {
-    i.id = i.id || ('local_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
-    localData.push(i);
-  });
-  saveLocalData(localData);
-  return valid.length;
+  const valid=items.filter(i=>i.name&&i.url).map(i=>({name:String(i.name).trim(),url:String(i.url).trim(),category:String(i.category||'未分类').trim(),description:String(i.description||'').trim(),is_active:true}));
+  if(!valid.length)throw new Error('无有效记录');
+  if(state.isOnline){const{error}=await getClient().from('nav_links').insert(valid);if(error)throw error}
+  const local=getLocalData();valid.forEach(i=>{i.id=i.id||('local_'+Date.now()+'_'+Math.random().toString(36).slice(2,6));local.push(i)});saveLocalData(local);return valid.length;
 }
 
-// ==================== ② 本地⇄云端同步 ====================
-$('btnUploadToCloud').onclick = async () => {
-  if (!state.isOnline) { showToast('❌ 请先切换到在线模式并连接数据库'); return; }
-  const localData = getLocalData();
-  if (!localData.length) { showToast('⚠️ 本地无数据可上传'); return; }
-  if (!confirm(`确定将本地 ${localData.length} 条数据上传到云端数据库吗？\n（将以追加方式写入）`)) return;
-  try {
-    const items = localData.map(i => ({
-      name: i.name, url: i.url, category: i.category || '未分类',
-      description: i.description || '', is_active: true
-    }));
-    const { error } = await getClient().from('nav_links').insert(items);
-    if (error) throw error;
-    showToast(`✅ 已上传 ${items.length} 条到云端`);
-    loadData(true);
-  } catch(err) { handleDbError(err, '上传'); }
-};
+// 同步
+$('btnUploadToCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ 请先切在线模式');return}const local=getLocalData();if(!local.length){showToast('⚠️ 本地无数据');return}if(!confirm(`上传${local.length}条到云端？`))return;try{const items=local.map(i=>({name:i.name,url:i.url,category:i.category||'未分类',description:i.description||'',is_active:true}));const{error}=await getClient().from('nav_links').insert(items);if(error)throw error;showToast(`✅ 已上传${items.length}条`);loadData(true)}catch(err){handleDbError(err,'上传')}};
+$('btnDownloadFromCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ 请先切在线模式');return}if(!confirm('从云端覆盖本地？'))return;try{const{data,error}=await getClient().from('nav_links').select('id,name,url,category,description').eq('is_active',true);if(error)throw error;saveLocalData(data||[]);state.allData=data||[];renderAll();updateSyncInfo();showToast(`✅ 已拉取${(data||[]).length}条`)}catch(err){handleDbError(err,'拉取')}};
 
-$('btnDownloadFromCloud').onclick = async () => {
-  if (!state.isOnline) { showToast('❌ 请先切换到在线模式并连接数据库'); return; }
-  if (!confirm('确定从云端拉取数据覆盖本地缓存吗？')) return;
-  try {
-    const { data, error } = await getClient().from('nav_links').select('id,name,url,category,description').eq('is_active', true);
-    if (error) throw error;
-    saveLocalData(data || []);
-    state.allData = data || [];
-    renderAll();
-    updateSyncInfo();
-    showToast(`✅ 已从云端拉取 ${(data||[]).length} 条`);
-  } catch(err) { handleDbError(err, '拉取'); }
-};
+// 转换
+$('btnJsonToExcel').onclick=()=>$('fileInputConvertJson').click();
+$('fileInputConvertJson').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const items=JSON.parse(await f.text());const ws=XLSX.utils.json_to_sheet(items);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');XLSX.writeFile(wb,f.name.replace('.json','.xlsx'));showToast('✅ 转换成功')}catch(err){showToast('❌ '+err.message)}e.target.value=''};
+$('btnExcelToJson').onclick=()=>$('fileInputConvertExcel').click();
+$('fileInputConvertExcel').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const items=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);downloadFile(new Blob([JSON.stringify(items,null,2)],{type:'application/json'}),f.name.replace('.xlsx','.json'));showToast('✅ 转换成功')}catch(err){showToast('❌ '+err.message)}e.target.value=''};
 
-// ==================== 格式转换 ====================
-$('btnJsonToExcel').onclick = () => $('fileInputConvertJson').click();
-$('fileInputConvertJson').onchange = async (e) => {
-  const f = e.target.files[0]; if(!f) return;
-  try {
-    const items = JSON.parse(await f.text());
-    if (!Array.isArray(items)) throw new Error('格式错误，需为数组');
-    const ws = XLSX.utils.json_to_sheet(items);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    XLSX.writeFile(wb, f.name.replace('.json','.xlsx'));
-    showToast('✅ JSON → Excel 转换成功');
-  } catch(err) { showToast('❌ ' + err.message); }
-  e.target.value = '';
-};
-
-$('btnExcelToJson').onclick = () => $('fileInputConvertExcel').click();
-$('fileInputConvertExcel').onchange = async (e) => {
-  const f = e.target.files[0]; if(!f) return;
-  try {
-    const wb = XLSX.read(await f.arrayBuffer(), {type:'array'});
-    const items = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-    downloadFile(new Blob([JSON.stringify(items,null,2)],{type:'application/json'}), f.name.replace('.xlsx','.json'));
-    showToast('✅ Excel → JSON 转换成功');
-  } catch(err) { showToast('❌ ' + err.message); }
-  e.target.value = '';
-};
-
-// ==================== 核心加载逻辑 ====================
-async function loadData(forceOnline = false) {
-  // 离线模式：只读本地，不发任何请求
-  if (state.mode === 'offline') {
-    updateSyncStatus(false, '离线模式');
-    state.allData = getLocalData();
-    renderAll();
-    return;
-  }
-
-  // 在线模式
-  const { url, key } = getConfig();
-
-  // 极速首屏：先用缓存渲染
-  const cachedData = getLocalData();
-  if (cachedData.length > 0 && !forceOnline) {
-    state.allData = cachedData;
-    updateSyncStatus(false, '同步中...');
-    renderAll();
-  } else if (!url || !key) {
-    updateSyncStatus(false, '未配置');
-    showState('⚙️', '请先配置数据库', '点击右上角 ⚙️ 填写 Supabase 连接信息');
-    tabsEl.innerHTML = '';
-    return;
-  }
-
-  // 后台静默拉取最新数据
-  if (url && key) {
-    try {
-      const { data, error } = await getClient()
-        .from('nav_links')
-        .select('id, name, url, category, description')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-      if (!error && data) {
-        saveLocalData(data);
-        state.allData = data;
-        updateSyncStatus(true, '云端同步');
-        renderAll();
-      } else {
-        throw error;
-      }
-    } catch (err) {
-      console.warn('云端同步失败', err);
-      if (cachedData.length === 0) {
-        updateSyncStatus(false, '连接失败');
-        showState('🔴', '连接失败', err.message || '请检查网络或 Key 配置');
-      } else {
-        updateSyncStatus(false, '离线(缓存)');
-      }
-    }
-  }
+// ==================== 加载 ====================
+async function loadData(force=false) {
+  if(state.mode==='offline'){updateSyncStatus(false,'离线模式');state.allData=getLocalData();renderAll();return}
+  const{url,key}=getConfig();
+  const cached=getLocalData();
+  if(cached.length>0&&!force){state.allData=cached;updateSyncStatus(false,'同步中...');renderAll()}
+  else if(!url||!key){updateSyncStatus(false,'未配置');showState('⚙️','请先配置数据库','点击 ⚙️ 填写连接信息');tabsEl.innerHTML='';return}
+  if(url&&key){try{const{data,error}=await getClient().from('nav_links').select('id,name,url,category,description').eq('is_active',true).order('sort_order',{ascending:true});if(!error&&data){saveLocalData(data);state.allData=data;updateSyncStatus(true,'云端同步');renderAll()}else throw error}catch(err){console.warn(err);if(!cached.length){updateSyncStatus(false,'连接失败');showState('🔴','连接失败',err.message)}else{updateSyncStatus(false,'离线(缓存)')}}}
 }
 
-// ==================== 渲染引擎 ====================
+// ==================== 渲染 ====================
 function renderAll() {
-  if (!state.allData.length) {
-    showState(state.mode === 'offline' ? '💾' : '📭', '暂无数据', '点击右下角 + 添加第一条导航');
-    tabsEl.innerHTML = ''; return;
-  }
-  const catSet = new Set(state.allData.map(d => d.category || '未分类'));
-  state.categories = ['全部', ...Array.from(catSet).sort()];
-  if (!state.categories.includes(state.currentCategory)) state.currentCategory = '全部';
-  renderTabs(); renderContent();
+  if(!state.allData.length){showState(state.mode==='offline'?'💾':'📭','暂无数据','点击 + 添加第一条导航');tabsEl.innerHTML='';return}
+  const catSet=new Set(state.allData.map(d=>d.category||'未分类'));
+  state.categories=['全部',...Array.from(catSet).sort()];
+  if(!state.categories.includes(state.currentCategory))state.currentCategory='全部';
+  renderTabs();renderContent();
 }
-
 function renderTabs() {
-  tabsEl.innerHTML = state.categories.map(cat => {
-    const count = cat === '全部' ? state.allData.length : state.allData.filter(d => (d.category || '未分类') === cat).length;
-    return `<button class="tab ${cat === state.currentCategory ? 'active' : ''}" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}<span class="count">(${count})</span></button>`;
-  }).join('');
-  tabsEl.querySelectorAll('.tab').forEach(btn => {
-    btn.onclick = () => { state.currentCategory = btn.dataset.cat; renderTabs(); renderContent(); };
-  });
+  tabsEl.innerHTML=state.categories.map(cat=>{const count=cat==='全部'?state.allData.length:state.allData.filter(d=>(d.category||'未分类')===cat).length;return`<button class="tab ${cat===state.currentCategory?'active':''}" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}<span class="count">(${count})</span></button>`}).join('');
+  tabsEl.querySelectorAll('.tab').forEach(btn=>{btn.onclick=()=>{state.currentCategory=btn.dataset.cat;renderTabs();renderContent()}});
 }
-
 function renderContent() {
-  const filtered = state.currentCategory === '全部' ? state.allData : state.allData.filter(d => (d.category || '未分类') === state.currentCategory);
-  if (!filtered.length) {
-    content.innerHTML = `<div class="state-box"><div class="icon">🔍</div><div class="title">该分类下暂无内容</div></div>`; return;
-  }
-  const cls = state.viewMode === 'grid' ? 'view-grid' : 'view-list';
-  content.innerHTML = `<div class="${cls}">${filtered.map(cardHtml).join('')}</div>`;
+  const filtered=state.currentCategory==='全部'?state.allData:state.allData.filter(d=>(d.category||'未分类')===state.currentCategory);
+  if(!filtered.length){content.innerHTML=`<div class="state-box"><div class="icon">🔍</div><div class="title">该分类下暂无内容</div></div>`;return}
+  const cls=state.viewMode==='grid'?'view-grid':'view-list';
+  content.innerHTML=`<div class="${cls}">${filtered.map(cardHtml).join('')}</div>`;
 }
-
 function cardHtml(item) {
-  const name = escapeHtml(item.name || '未命名');
-  const desc = escapeHtml(item.description || '');
-  const initial = name.charAt(0).toUpperCase();
-  const colors = [['#6366f1','#8b5cf6'],['#ec4899','#f43f5e'],['#14b8a6','#06b6d4'],['#f59e0b','#f97316'],['#10b981','#059669'],['#3b82f6','#6366f1']];
-  const c = colors[name.length % colors.length];
-  const idVal = typeof item.id === 'number' ? item.id : `'${escapeHtml(String(item.id))}'`;
-  return `<a class="card" href="${item.url}" target="_blank" rel="noopener">
-    <button class="card-delete" onclick="event.preventDefault();event.stopPropagation();deleteLink(${idVal},'${escapeHtml(item.name)}')" title="删除">✕</button>
+  const name=escapeHtml(item.name||'未命名'),desc=escapeHtml(item.description||''),initial=name.charAt(0).toUpperCase();
+  const colors=[['#6366f1','#8b5cf6'],['#ec4899','#f43f5e'],['#14b8a6','#06b6d4'],['#f59e0b','#f97316'],['#10b981','#059669'],['#3b82f6','#6366f1']];
+  const c=colors[name.length%colors.length];
+  return`<a class="card" href="${item.url}" target="_blank" rel="noopener" data-id="${item.id}">
     <div class="card-icon" style="background:linear-gradient(135deg,${c[0]},${c[1]})">${initial}</div>
-    <div class="card-info"><div class="card-name">${name}</div>${desc ? `<div class="card-desc">${desc}</div>` : ''}</div>
+    <div class="card-info"><div class="card-name">${name}</div>${desc?`<div class="card-desc">${desc}</div>`:''}</div>
   </a>`;
 }
-
-function showState(icon, title, desc) {
-  content.innerHTML = `<div class="state-box"><div class="icon">${icon}</div><div class="title">${title}</div><div class="desc">${desc}</div></div>`;
-}
+function showState(icon,title,desc){content.innerHTML=`<div class="state-box"><div class="icon">${icon}</div><div class="title">${title}</div><div class="desc">${desc}</div></div>`}
 
 // ==================== 启动 ====================
 updateModeUI();
