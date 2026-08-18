@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>我的导航页</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<!-- 异步加载非关键资源，不阻塞渲染 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" async></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" async></script>
 <style>
 :root {
   --bg: #f5f7fa; --bg-card: #ffffff; --text: #1a1a2e; --text-secondary: #6b7280;
@@ -13,7 +14,6 @@
   --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-hover: 0 10px 25px rgba(99,102,241,0.15);
   --radius: 12px; --modal-bg: #ffffff; --overlay: rgba(0,0,0,0.4);
   --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
-  /* 动态密度变量 */
   --card-gap: 16px; --card-pad: 20px; --icon-size: 44px; --font-name: 16px; --font-desc: 13px; --desc-lines: 2;
 }
 [data-theme="dark"] {
@@ -62,7 +62,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .fab { position: fixed; bottom: 32px; right: 32px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #ec4899); color: white; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.4); display: flex; align-items: center; justify-content: center; transition: all 0.3s; z-index: 80; }
 .fab:hover { transform: scale(1.1) rotate(90deg); }
 
-/* ===== 上下文菜单 ===== */
 .ctx-menu { position: fixed; z-index: 2000; background: var(--modal-bg); border: 1px solid var(--border); border-radius: 12px; padding: 6px; min-width: 180px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: ctxIn 0.15s ease; display: none; }
 .ctx-menu.show { display: block; }
 @keyframes ctxIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -73,7 +72,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 [data-theme="dark"] .ctx-item.danger:hover { background: #450a0a; }
 .ctx-divider { height: 1px; background: var(--border); margin: 4px 8px; }
 
-/* ===== 模态框通用 ===== */
 .modal-overlay { position: fixed; inset: 0; background: var(--overlay); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
 .modal-overlay.show { display: flex; }
 .modal { background: var(--modal-bg); border-radius: 16px; padding: 32px; width: 100%; max-width: 540px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); animation: modalIn 0.25s ease; max-height: 90vh; overflow-y: auto; }
@@ -103,7 +101,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
 
-/* 模式开关 */
 .mode-switch { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--bg); border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
 .mode-switch .mode-label { font-size: 14px; font-weight: 600; flex: 1; }
 .mode-switch .mode-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
@@ -116,7 +113,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .online-fields { overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s; }
 .online-fields.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; pointer-events: none; }
 
-/* 密度滑块 */
 .density-control { padding: 14px 16px; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; }
 .density-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .density-header span { font-size: 14px; font-weight: 600; }
@@ -167,11 +163,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </header>
 <div class="tabs-wrapper"><div class="tabs" id="tabs"></div></div>
-<main class="content" id="content"><div class="state-box"><div class="icon">⏳</div><div class="title">加载中...</div></div></main>
+<main class="content" id="content"></main>
 <button class="fab" id="btnAdd" title="添加导航">+</button>
 <div class="toast" id="toast"></div>
 
-<!-- 上下文菜单 -->
 <div class="ctx-menu" id="ctxMenu">
   <div class="ctx-item" data-action="edit">✏️ 编辑</div>
   <div class="ctx-item" data-action="move">📂 移动到分组...</div>
@@ -179,14 +174,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   <div class="ctx-item danger" data-action="delete">🗑️ 删除</div>
 </div>
 
-<!-- 设置弹窗 -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <div class="modal-header"><h2>⚙️ 设置中心</h2><button class="close-btn" onclick="closeModal('settingsModal')">&times;</button></div>
     <p class="subtitle">管理连接、显示密度与数据。</p>
     <div id="rlsAlertContainer"></div>
-
-    <!-- 模式切换 -->
     <div class="mode-switch">
       <div><div class="mode-label" id="modeLabelText">📡 在线模式</div><div class="mode-desc" id="modeDescText">连接 Supabase 云端数据库</div></div>
       <label class="switch"><input type="checkbox" id="modeToggle" checked><span class="slider"></span></label>
@@ -196,27 +188,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="form-group"><label>Anon Key</label><input type="text" id="inputKey" placeholder="eyJhbGciOiJIUzI1NiIs..."></div>
       <div class="modal-actions"><button class="btn btn-primary" id="btnSaveSettings">💾 保存并连接</button></div>
     </div>
-
     <hr class="section-divider">
-
-    <!-- ④ 密度滑块 -->
     <h3>🎚️ 显示密度</h3>
     <div class="density-control">
       <div class="density-header"><span>卡片紧凑度</span><span class="density-val" id="densityVal">标准</span></div>
       <input type="range" class="density-slider" id="densitySlider" min="0" max="100" value="50">
       <div class="density-labels"><span>紧凑</span><span>标准</span><span>宽松</span></div>
     </div>
-
     <hr class="section-divider">
-
-    <!-- 数据同步 -->
     <h3>☁️ 数据同步</h3>
     <div class="btn-group">
       <button class="btn btn-success btn-sm" id="btnUploadToCloud">⬆️ 本地→云端</button>
       <button class="btn btn-warning btn-sm" id="btnDownloadFromCloud">⬇️ 云端→本地</button>
     </div>
     <div class="sync-info" id="syncInfoText">本地缓存: 0 条</div>
-
     <hr class="section-divider">
     <h3>📦 数据管理</h3>
     <div class="btn-group">
@@ -240,7 +225,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </div>
 
-<!-- 添加/编辑弹窗 -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
     <div class="modal-header"><h2 id="addModalTitle">➕ 添加导航</h2><button class="close-btn" onclick="closeModal('addModal')">&times;</button></div>
@@ -248,17 +232,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <input type="hidden" id="editId">
     <div class="form-group"><label>名称 *</label><input type="text" id="addName" placeholder="如：百度"></div>
     <div class="form-group"><label>网址 *</label><input type="url" id="addUrl" placeholder="https://baidu.com"></div>
-    <!-- ③ 分类下拉+自定义 -->
-    <div class="form-group">
-      <label>分类</label>
-      <select id="addCategorySelect">
-        <option value="">-- 请选择或输入新分类 --</option>
-      </select>
-    </div>
-    <div class="form-group" id="customCatGroup" style="display:none;">
-      <label>自定义分类名称</label>
-      <input type="text" id="addCategoryCustom" placeholder="输入新的分类名称">
-    </div>
+    <div class="form-group"><label>分类</label><select id="addCategorySelect"><option value="">-- 请选择或输入新分类 --</option></select></div>
+    <div class="form-group" id="customCatGroup" style="display:none;"><label>自定义分类名称</label><input type="text" id="addCategoryCustom" placeholder="输入新的分类名称"></div>
     <div class="form-group"><label>描述</label><textarea id="addDesc" placeholder="简短描述..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('addModal')">取消</button>
@@ -267,20 +242,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </div>
 
-<!-- 移动分组弹窗 -->
 <div class="modal-overlay" id="moveModal">
   <div class="modal" style="max-width:400px;">
     <div class="modal-header"><h2>📂 移动到分组</h2><button class="close-btn" onclick="closeModal('moveModal')">&times;</button></div>
     <p class="subtitle">选择目标分组，或创建新分组。</p>
     <input type="hidden" id="moveItemId">
-    <div class="form-group">
-      <label>目标分组</label>
-      <select id="moveTargetSelect"></select>
-    </div>
-    <div class="form-group" id="moveCustomGroup" style="display:none;">
-      <label>新分组名称</label>
-      <input type="text" id="moveCustomCat" placeholder="输入新分组名">
-    </div>
+    <div class="form-group"><label>目标分组</label><select id="moveTargetSelect"></select></div>
+    <div class="form-group" id="moveCustomGroup" style="display:none;"><label>新分组名称</label><input type="text" id="moveCustomCat" placeholder="输入新分组名"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('moveModal')">取消</button>
       <button class="btn btn-primary" id="btnConfirmMove">确认移动</button>
@@ -288,7 +256,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </div>
 
-<!-- 选择方式弹窗 -->
 <div class="modal-overlay" id="choiceModal">
   <div class="modal" style="max-width:420px;">
     <div class="modal-header"><h2 id="choiceTitle">选择方式</h2><button class="close-btn" onclick="closeModal('choiceModal')">&times;</button></div>
@@ -296,7 +263,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </div>
 
-<!-- 文本导入弹窗 -->
 <div class="modal-overlay" id="textImportModal">
   <div class="modal text-modal">
     <div class="modal-header"><h2>📋 粘贴 JSON</h2><button class="close-btn" onclick="closeModal('textImportModal')">&times;</button></div>
@@ -308,7 +274,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   </div>
 </div>
 
-<!-- 文本导出弹窗 -->
 <div class="modal-overlay" id="textExportModal">
   <div class="modal text-modal">
     <div class="modal-header"><h2>📋 JSON 预览</h2><button class="close-btn" onclick="closeModal('textExportModal')">&times;</button></div>
@@ -327,7 +292,7 @@ const state = {
   theme: localStorage.getItem('theme') || 'light', categories: [], isOnline: false,
   mode: localStorage.getItem('nav_mode') || 'online',
   density: parseInt(localStorage.getItem('nav_density') || '50'),
-  ctxItem: null // 当前右键操作的条目
+  ctxItem: null
 };
 const $ = id => document.getElementById(id);
 const LOCAL_KEY = 'nav_local_data';
@@ -336,7 +301,11 @@ const LOCAL_KEY = 'nav_local_data';
 function showToast(msg, d=3000) { const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
 function escapeHtml(s) { return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'):''; }
 function getConfig() { return {url:localStorage.getItem('sb_url')||'', key:localStorage.getItem('sb_key')||''}; }
-function getClient() { const{url,key}=getConfig(); if(!url||!key)throw new Error('未配置'); if(!window.supabase)throw new Error('SDK未加载'); return window.supabase.createClient(url,key); }
+function getClient() { 
+  if(!window.supabase) throw new Error('SDK加载中，请稍后再试');
+  const{url,key}=getConfig(); if(!url||!key)throw new Error('未配置'); 
+  return window.supabase.createClient(url,key); 
+}
 function dateStr() { return new Date().toISOString().slice(0,10); }
 function downloadFile(blob,name) { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
 function saveLocalData(d) { localStorage.setItem(LOCAL_KEY,JSON.stringify(d)); }
@@ -345,22 +314,18 @@ function openModal(id) { $(id).classList.add('show'); }
 function closeModal(id) { $(id).classList.remove('show'); }
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show')}));
 
-// ==================== ④ 密度滑块 ====================
+// ==================== 密度滑块 ====================
 function applyDensity(val) {
-  // val: 0(紧凑) ~ 100(宽松)
-  const gap = 8 + (val / 100) * 20;       // 8~28px
-  const pad = 12 + (val / 100) * 16;      // 12~28px
-  const icon = 32 + (val / 100) * 20;     // 32~52px
-  const fName = 13 + (val / 100) * 5;     // 13~18px
-  const fDesc = 11 + (val / 100) * 4;     // 11~15px
+  const gap = 8 + (val / 100) * 20;
+  const pad = 12 + (val / 100) * 16;
+  const icon = 32 + (val / 100) * 20;
+  const fName = 13 + (val / 100) * 5;
+  const fDesc = 11 + (val / 100) * 4;
   const lines = val < 33 ? 1 : val < 66 ? 2 : 3;
   const r = document.documentElement.style;
-  r.setProperty('--card-gap', gap+'px');
-  r.setProperty('--card-pad', pad+'px');
-  r.setProperty('--icon-size', icon+'px');
-  r.setProperty('--font-name', fName+'px');
-  r.setProperty('--font-desc', fDesc+'px');
-  r.setProperty('--desc-lines', lines);
+  r.setProperty('--card-gap', gap+'px'); r.setProperty('--card-pad', pad+'px');
+  r.setProperty('--icon-size', icon+'px'); r.setProperty('--font-name', fName+'px');
+  r.setProperty('--font-desc', fDesc+'px'); r.setProperty('--desc-lines', lines);
   const labels = ['紧凑','较紧凑','标准','较宽松','宽松'];
   $('densityVal').textContent = labels[Math.min(4, Math.floor(val/20))];
 }
@@ -405,12 +370,11 @@ function openSettings() { const c=getConfig(); $('inputUrl').value=c.url; $('inp
 $('btnSettings').onclick=openSettings;
 $('btnSaveSettings').onclick=async()=>{const u=$('inputUrl').value.trim().replace(/\/+$/,''),k=$('inputKey').value.trim();if(!u||!k){showToast('❌ 请填写完整');return}localStorage.setItem('sb_url',u);localStorage.setItem('sb_key',k);closeModal('settingsModal');await loadData(true)};
 
-// ==================== ③ 分类下拉构建 ====================
+// ==================== 分类下拉 ====================
 function buildCategorySelect(selectEl, customGroupEl, customInputEl, selectedCat) {
   const cats = [...new Set(state.allData.map(d=>d.category||'未分类'))].sort();
   selectEl.innerHTML = '<option value="__custom__">✏️ 新建分类...</option>' +
     cats.map(c=>`<option value="${escapeHtml(c)}" ${c===selectedCat?'selected':''}>${escapeHtml(c)}</option>`).join('');
-  
   const toggleCustom = () => {
     const isCustom = selectEl.value === '__custom__';
     customGroupEl.style.display = isCustom ? 'block' : 'none';
@@ -419,12 +383,8 @@ function buildCategorySelect(selectEl, customGroupEl, customInputEl, selectedCat
   selectEl.onchange = toggleCustom;
   toggleCustom();
 }
-
 function getSelectedCategory(selectEl, customInputEl) {
-  if(selectEl.value === '__custom__') {
-    const v = customInputEl.value.trim();
-    return v || '未分类';
-  }
+  if(selectEl.value === '__custom__') { const v = customInputEl.value.trim(); return v || '未分类'; }
   return selectEl.value || '未分类';
 }
 
@@ -433,48 +393,35 @@ $('btnAdd').onclick = () => {
   $('editId').value = '';
   $('addModalTitle').textContent = '➕ 添加导航';
   $('addModalSubtitle').textContent = '新增记录将立即同步。';
-  $('addName').value=''; $('addUrl').value=''; $('addDesc').value='';
-  $('addCategoryCustom').value='';
+  $('addName').value=''; $('addUrl').value=''; $('addDesc').value=''; $('addCategoryCustom').value='';
   buildCategorySelect($('addCategorySelect'), $('customCatGroup'), $('addCategoryCustom'), '');
   openModal('addModal');
 };
-
 function openEditModal(item) {
   $('editId').value = item.id;
   $('addModalTitle').textContent = '✏️ 编辑导航';
   $('addModalSubtitle').textContent = '修改后自动同步。';
-  $('addName').value = item.name||'';
-  $('addUrl').value = item.url||'';
-  $('addDesc').value = item.description||'';
+  $('addName').value = item.name||''; $('addUrl').value = item.url||''; $('addDesc').value = item.description||'';
   $('addCategoryCustom').value='';
   buildCategorySelect($('addCategorySelect'), $('customCatGroup'), $('addCategoryCustom'), item.category||'未分类');
   openModal('addModal');
 }
-
 $('btnSaveAdd').onclick = async () => {
   const name=$('addName').value.trim(), url=$('addUrl').value.trim();
   const category = getSelectedCategory($('addCategorySelect'), $('addCategoryCustom'));
   const description=$('addDesc').value.trim();
   const editId = $('editId').value;
   if(!name||!url){showToast('❌ 名称和网址必填');return}
-
   if(editId) {
-    // 编辑模式
-    if(state.isOnline && typeof Number(editId)==='number' && !String(editId).startsWith('local_')) {
-      try {
-        const{error}=await getClient().from('nav_links').update({name,url,category,description}).eq('id',editId);
-        if(error)throw error;
-        showToast('✅ 已更新到云端');
-      } catch(err){handleDbError(err,'更新');return}
+    if(state.isOnline && !String(editId).startsWith('local_')) {
+      try { const{error}=await getClient().from('nav_links').update({name,url,category,description}).eq('id',editId); if(error)throw error; showToast('✅ 已更新到云端'); }
+      catch(err){handleDbError(err,'更新');return}
     }
-    // 更新本地
-    let local=getLocalData();
-    const idx=local.findIndex(i=>String(i.id)===String(editId));
+    let local=getLocalData(); const idx=local.findIndex(i=>String(i.id)===String(editId));
     if(idx>=0){local[idx]={...local[idx],name,url,category,description};saveLocalData(local)}
     state.allData=state.isOnline?state.allData.map(i=>String(i.id)===String(editId)?{...i,name,url,category,description}:i):local;
     closeModal('addModal'); renderAll(); showToast('✅ 已保存');
   } else {
-    // 新增模式
     const newItem={name,url,category,description,is_active:true};
     if(state.isOnline){
       try{const{error}=await getClient().from('nav_links').insert(newItem);if(error)throw error;showToast('✅ 已同步云端');closeModal('addModal');loadData()}
@@ -486,108 +433,52 @@ $('btnSaveAdd').onclick = async () => {
   }
 };
 
-// ==================== ①② 上下文菜单（右键/长按） ====================
+// ==================== 上下文菜单 ====================
 let longPressTimer = null;
 const ctxMenu = $('ctxMenu');
-
 function showCtxMenu(x, y, item) {
-  state.ctxItem = item;
-  ctxMenu.classList.add('show');
-  // 边界修正
-  const mw=ctxMenu.offsetWidth, mh=ctxMenu.offsetHeight;
-  const ww=window.innerWidth, wh=window.innerHeight;
-  ctxMenu.style.left = Math.min(x, ww-mw-10)+'px';
-  ctxMenu.style.top = Math.min(y, wh-mh-10)+'px';
+  state.ctxItem = item; ctxMenu.classList.add('show');
+  const mw=ctxMenu.offsetWidth, mh=ctxMenu.offsetHeight, ww=window.innerWidth, wh=window.innerHeight;
+  ctxMenu.style.left = Math.min(x, ww-mw-10)+'px'; ctxMenu.style.top = Math.min(y, wh-mh-10)+'px';
 }
-
 function hideCtxMenu() { ctxMenu.classList.remove('show'); state.ctxItem=null; }
-
-// 全局点击隐藏菜单
-document.addEventListener('click', e => {
-  if(!ctxMenu.contains(e.target)) hideCtxMenu();
-});
-document.addEventListener('contextmenu', e => {
-  const card = e.target.closest('.card');
-  if(card) { e.preventDefault(); } else { hideCtxMenu(); }
-});
-
-// 绑定卡片事件（委托）
+document.addEventListener('click', e => { if(!ctxMenu.contains(e.target)) hideCtxMenu(); });
+document.addEventListener('contextmenu', e => { const card = e.target.closest('.card'); if(card) e.preventDefault(); else hideCtxMenu(); });
 content.addEventListener('contextmenu', e => {
-  const card = e.target.closest('.card');
-  if(!card) return;
-  e.preventDefault();
-  const id = card.dataset.id;
-  const item = state.allData.find(i=>String(i.id)===String(id));
+  const card = e.target.closest('.card'); if(!card) return; e.preventDefault();
+  const item = state.allData.find(i=>String(i.id)===String(card.dataset.id));
   if(item) showCtxMenu(e.clientX, e.clientY, item);
 });
-
-// 长按支持（移动端）
 content.addEventListener('touchstart', e => {
-  const card = e.target.closest('.card');
-  if(!card) return;
-  longPressTimer = setTimeout(() => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    const id = card.dataset.id;
-    const item = state.allData.find(i=>String(i.id)===String(id));
-    if(item) showCtxMenu(touch.clientX, touch.clientY, item);
-  }, 600);
+  const card = e.target.closest('.card'); if(!card) return;
+  longPressTimer = setTimeout(() => { e.preventDefault(); const touch=e.touches[0]; const item=state.allData.find(i=>String(i.id)===String(card.dataset.id)); if(item)showCtxMenu(touch.clientX,touch.clientY,item); }, 600);
 }, {passive:false});
 content.addEventListener('touchend', ()=>clearTimeout(longPressTimer));
 content.addEventListener('touchmove', ()=>clearTimeout(longPressTimer));
-
-// 菜单项点击
 ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
-  el.onclick = () => {
-    const action = el.dataset.action;
-    const item = state.ctxItem;
-    hideCtxMenu();
-    if(!item) return;
-    if(action==='edit') openEditModal(item);
-    else if(action==='delete') deleteLink(item.id, item.name);
-    else if(action==='move') openMoveModal(item);
-  };
+  el.onclick = () => { const action=el.dataset.action, item=state.ctxItem; hideCtxMenu(); if(!item)return; if(action==='edit')openEditModal(item); else if(action==='delete')deleteLink(item.id,item.name); else if(action==='move')openMoveModal(item); };
 });
 
-// ==================== ② 移动分组 ====================
+// ==================== 移动分组 ====================
 function openMoveModal(item) {
-  $('moveItemId').value = item.id;
-  $('moveCustomCat').value = '';
+  $('moveItemId').value = item.id; $('moveCustomCat').value = '';
   buildCategorySelect($('moveTargetSelect'), $('moveCustomGroup'), $('moveCustomCat'), item.category||'未分类');
   openModal('moveModal');
 }
-
 $('btnConfirmMove').onclick = async () => {
-  const id = $('moveItemId').value;
-  const newCat = getSelectedCategory($('moveTargetSelect'), $('moveCustomCat'));
-  if(!id) return;
-
-  if(state.isOnline && !String(id).startsWith('local_')) {
-    try {
-      const{error}=await getClient().from('nav_links').update({category:newCat}).eq('id',id);
-      if(error)throw error;
-      showToast(`✅ 已移动到「${newCat}」`);
-    } catch(err){handleDbError(err,'移动');return}
-  }
-  // 更新本地
-  let local=getLocalData();
-  const idx=local.findIndex(i=>String(i.id)===String(id));
+  const id=$('moveItemId').value, newCat=getSelectedCategory($('moveTargetSelect'),$('moveCustomCat')); if(!id)return;
+  if(state.isOnline&&!String(id).startsWith('local_')){try{const{error}=await getClient().from('nav_links').update({category:newCat}).eq('id',id);if(error)throw error;showToast(`✅ 已移动到「${newCat}」`)}catch(err){handleDbError(err,'移动');return}}
+  let local=getLocalData(); const idx=local.findIndex(i=>String(i.id)===String(id));
   if(idx>=0){local[idx].category=newCat;saveLocalData(local)}
   state.allData=state.isOnline?state.allData.map(i=>String(i.id)===String(id)?{...i,category:newCat}:i):local;
-  closeModal('moveModal'); renderAll();
-  if(!state.isOnline) showToast(`✅ 已移动到「${newCat}」`);
+  closeModal('moveModal'); renderAll(); if(!state.isOnline)showToast(`✅ 已移动到「${newCat}」`);
 };
 
 // ==================== 删除 ====================
 async function deleteLink(id,name) {
   if(!confirm(`确定删除「${name}」吗？`))return;
-  if(state.isOnline&&!String(id).startsWith('local_')){
-    try{const{error}=await getClient().from('nav_links').delete().eq('id',id);if(error)throw error;showToast('✅ 已删除');loadData()}
-    catch(err){handleDbError(err,'删除')}
-  } else {
-    let local=getLocalData();local=local.filter(i=>String(i.id)!==String(id));saveLocalData(local);
-    state.allData=local;renderAll();showToast('✅ 已从本地删除');
-  }
+  if(state.isOnline&&!String(id).startsWith('local_')){try{const{error}=await getClient().from('nav_links').delete().eq('id',id);if(error)throw error;showToast('✅ 已删除');loadData()}catch(err){handleDbError(err,'删除')}}
+  else{let local=getLocalData();local=local.filter(i=>String(i.id)!==String(id));saveLocalData(local);state.allData=local;renderAll();showToast('✅ 已从本地删除')}
 }
 
 // ==================== RLS ====================
@@ -607,20 +498,19 @@ function showChoice(title,opts) {
   $('choiceGrid').querySelectorAll('.choice-card').forEach(c=>{c.onclick=()=>{closeModal('choiceModal');opts[parseInt(c.dataset.i)].action()}});
   openModal('choiceModal');
 }
-
 $('btnExportJson').onclick=()=>{if(!state.allData.length){showToast('⚠️ 无数据');return}showChoice('导出JSON',[{icon:'📁',title:'导出文件',desc:'下载.json',action:()=>{downloadFile(new Blob([JSON.stringify(state.allData,null,2)],{type:'application/json'}),`nav_${dateStr()}.json`);showToast('✅ 已下载')}},{icon:'📋',title:'复制到剪贴板',desc:'一键复制',action:()=>{navigator.clipboard.writeText(JSON.stringify(state.allData,null,2)).then(()=>showToast('✅ 已复制')).catch(()=>{$('textExportArea').value=JSON.stringify(state.allData,null,2);openModal('textExportModal')})}},{icon:'📝',title:'显示文本',desc:'手动复制',action:()=>{$('textExportArea').value=JSON.stringify(state.allData,null,2);openModal('textExportModal')}}])};
 $('btnCopyTextExport').onclick=()=>{const a=$('textExportArea');a.select();navigator.clipboard.writeText(a.value).then(()=>showToast('✅ 已复制')).catch(()=>{document.execCommand('copy');showToast('✅ 已复制')})};
 $('btnImportJson').onclick=()=>showChoice('导入JSON',[{icon:'📁',title:'从文件',desc:'选择.json',action:()=>$('fileInputJson').click()},{icon:'📋',title:'从文本',desc:'粘贴JSON',action:()=>{$('textImportArea').value='';openModal('textImportModal')}}]);
 $('fileInputJson').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const n=await batchInsert(JSON.parse(await f.text()));showToast(`✅ 导入${n}条`);closeModal('settingsModal');loadData()}catch(err){handleDbError(err,'导入')}e.target.value=''};
 $('btnConfirmTextImport').onclick=async()=>{const t=$('textImportArea').value.trim();if(!t){showToast('❌ 请粘贴内容');return}try{const n=await batchInsert(JSON.parse(t));showToast(`✅ 导入${n}条`);closeModal('textImportModal');closeModal('settingsModal');loadData()}catch(err){showToast('❌ '+err.message)}};
-$('btnExportExcel').onclick=()=>{if(!state.allData.length||typeof XLSX==='undefined')return;const ws=XLSX.utils.json_to_sheet(state.allData.map(d=>({name:d.name,url:d.url,category:d.category||'',description:d.description||''})));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'导航');XLSX.writeFile(wb,`nav_${dateStr()}.xlsx`);showToast('✅ Excel已导出')};
+$('btnExportExcel').onclick=()=>{if(!state.allData.length||typeof XLSX==='undefined'){showToast('⚠️ 无数据或Excel库未就绪');return}const ws=XLSX.utils.json_to_sheet(state.allData.map(d=>({name:d.name,url:d.url,category:d.category||'',description:d.description||''})));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'导航');XLSX.writeFile(wb,`nav_${dateStr()}.xlsx`);showToast('✅ Excel已导出')};
 $('btnImportExcel').onclick=()=>$('fileInputExcel').click();
-$('fileInputExcel').onchange=async e=>{const f=e.target.files[0];if(!f||typeof XLSX==='undefined')return;try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const n=await batchInsert(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));showToast(`✅ 导入${n}条`);closeModal('settingsModal');loadData()}catch(err){handleDbError(err,'导入')}e.target.value=''};
-$('btnDownloadTemplate').onclick=()=>{if(typeof XLSX==='undefined')return;const ws=XLSX.utils.json_to_sheet([{name:'示例',url:'https://example.com',category:'工具',description:'描述'}]);ws['!cols']=[{wch:20},{wch:40},{wch:15},{wch:30}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'模板');XLSX.writeFile(wb,'nav_template.xlsx')};
+$('fileInputExcel').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(typeof XLSX==='undefined'){showToast('❌ Excel库未就绪');return}try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const n=await batchInsert(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));showToast(`✅ 导入${n}条`);closeModal('settingsModal');loadData()}catch(err){handleDbError(err,'导入')}e.target.value=''};
+$('btnDownloadTemplate').onclick=()=>{if(typeof XLSX==='undefined'){showToast('❌ Excel库未就绪');return}const ws=XLSX.utils.json_to_sheet([{name:'示例',url:'https://example.com',category:'工具',description:'描述'}]);ws['!cols']=[{wch:20},{wch:40},{wch:15},{wch:30}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'模板');XLSX.writeFile(wb,'nav_template.xlsx')};
 async function batchInsert(items) {
   const valid=items.filter(i=>i.name&&i.url).map(i=>({name:String(i.name).trim(),url:String(i.url).trim(),category:String(i.category||'未分类').trim(),description:String(i.description||'').trim(),is_active:true}));
   if(!valid.length)throw new Error('无有效记录');
-  if(state.isOnline){const{error}=await getClient().from('nav_links').insert(valid);if(error)throw error}
+  if(state.isOnline){try{const{error}=await getClient().from('nav_links').insert(valid);if(error)throw error}catch(e){throw e}}
   const local=getLocalData();valid.forEach(i=>{i.id=i.id||('local_'+Date.now()+'_'+Math.random().toString(36).slice(2,6));local.push(i)});saveLocalData(local);return valid.length;
 }
 
@@ -630,18 +520,55 @@ $('btnDownloadFromCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ �
 
 // 转换
 $('btnJsonToExcel').onclick=()=>$('fileInputConvertJson').click();
-$('fileInputConvertJson').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const items=JSON.parse(await f.text());const ws=XLSX.utils.json_to_sheet(items);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');XLSX.writeFile(wb,f.name.replace('.json','.xlsx'));showToast('✅ 转换成功')}catch(err){showToast('❌ '+err.message)}e.target.value=''};
+$('fileInputConvertJson').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(typeof XLSX==='undefined'){showToast('❌ Excel库未就绪');return}try{const items=JSON.parse(await f.text());const ws=XLSX.utils.json_to_sheet(items);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');XLSX.writeFile(wb,f.name.replace('.json','.xlsx'));showToast('✅ 转换成功')}catch(err){showToast('❌ '+err.message)}e.target.value=''};
 $('btnExcelToJson').onclick=()=>$('fileInputConvertExcel').click();
-$('fileInputConvertExcel').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const items=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);downloadFile(new Blob([JSON.stringify(items,null,2)],{type:'application/json'}),f.name.replace('.xlsx','.json'));showToast('✅ 转换成功')}catch(err){showToast('❌ '+err.message)}e.target.value=''};
+$('fileInputConvertExcel').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(typeof XLSX==='undefined'){showToast('❌ Excel库未就绪');return}try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const items=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);downloadFile(new Blob([JSON.stringify(items,null,2)],{type:'application/json'}),f.name.replace('.xlsx','.json'));showToast('✅ 转换成功')}catch(err){showToast('❌ '+err.message)}e.target.value=''};
 
-// ==================== 加载 ====================
+// ==================== ⭐ 极速加载核心 ====================
 async function loadData(force=false) {
-  if(state.mode==='offline'){updateSyncStatus(false,'离线模式');state.allData=getLocalData();renderAll();return}
-  const{url,key}=getConfig();
-  const cached=getLocalData();
-  if(cached.length>0&&!force){state.allData=cached;updateSyncStatus(false,'同步中...');renderAll()}
-  else if(!url||!key){updateSyncStatus(false,'未配置');showState('⚙️','请先配置数据库','点击 ⚙️ 填写连接信息');tabsEl.innerHTML='';return}
-  if(url&&key){try{const{data,error}=await getClient().from('nav_links').select('id,name,url,category,description').eq('is_active',true).order('sort_order',{ascending:true});if(!error&&data){saveLocalData(data);state.allData=data;updateSyncStatus(true,'云端同步');renderAll()}else throw error}catch(err){console.warn(err);if(!cached.length){updateSyncStatus(false,'连接失败');showState('🔴','连接失败',err.message)}else{updateSyncStatus(false,'离线(缓存)')}}}
+  // 【关键修复】无论何种模式，先用本地缓存立即渲染，消除白屏
+  const cached = getLocalData();
+  if (cached.length > 0) {
+    state.allData = cached;
+    renderAll();
+  }
+
+  // 离线模式：到此为止，不发任何请求
+  if (state.mode === 'offline') {
+    updateSyncStatus(false, '离线模式');
+    if (!cached.length) showState('💾', '暂无本地数据', '切换到在线模式或导入数据');
+    return;
+  }
+
+  // 在线模式：后台静默同步
+  const {url, key} = getConfig();
+  if (!url || !key) {
+    updateSyncStatus(false, '未配置');
+    if (!cached.length) showState('⚙️', '请先配置数据库', '点击 ⚙️ 填写连接信息');
+    return;
+  }
+
+  updateSyncStatus(false, '同步中...');
+  try {
+    const client = getClient();
+    const {data, error} = await client.from('nav_links').select('id,name,url,category,description').eq('is_active', true).order('sort_order', {ascending: true});
+    if (!error && data) {
+      saveLocalData(data);
+      state.allData = data;
+      updateSyncStatus(true, '云端同步');
+      renderAll();
+    } else {
+      throw error;
+    }
+  } catch (err) {
+    console.warn('后台同步失败:', err);
+    if (!cached.length) {
+      updateSyncStatus(false, '连接失败');
+      showState('🔴', '连接失败', err.message || '请检查网络或Key');
+    } else {
+      updateSyncStatus(false, '离线(缓存)');
+    }
+  }
 }
 
 // ==================== 渲染 ====================
@@ -673,8 +600,18 @@ function cardHtml(item) {
 }
 function showState(icon,title,desc){content.innerHTML=`<div class="state-box"><div class="icon">${icon}</div><div class="title">${title}</div><div class="desc">${desc}</div></div>`}
 
-// ==================== 启动 ====================
+// ==================== 🚀 启动：先渲染再加载 ====================
 updateModeUI();
+// 【关键修复】初始化时立即用缓存渲染，不等 loadData 的异步流程
+const initCache = getLocalData();
+if (initCache.length > 0) {
+  state.allData = initCache;
+  renderAll();
+  updateSyncStatus(false, '加载中...');
+} else {
+  showState('⏳', '正在加载...', '首次访问需等待数据加载');
+}
+// 然后才发起后台同步
 loadData();
 </script>
 </body>
