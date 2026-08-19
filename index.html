@@ -13,7 +13,8 @@
   --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-hover: 0 10px 25px rgba(99,102,241,0.15);
   --radius: 12px; --modal-bg: #ffffff; --overlay: rgba(0,0,0,0.4);
   --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
-  --card-gap: 16px; --card-pad: 20px; --icon-size: 44px; --font-name: 16px; --font-desc: 13px; --desc-lines: 2;
+  /* 默认紧凑参数 */
+  --card-gap: 8px; --card-pad: 12px; --icon-size: 34px; --font-name: 14px; --font-desc: 12px; --desc-lines: 1;
   --swipe-distance: 180px;
 }
 [data-theme="dark"] {
@@ -34,6 +35,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .header-actions { display: flex; align-items: center; gap: 8px; }
 .icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s; }
 .icon-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+.icon-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 .tabs-wrapper { padding: 12px 24px; position: sticky; top: 71px; z-index: 90; background: var(--bg); }
 .tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
@@ -51,47 +53,64 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .view-list .swipe-wrapper .card .card-info { flex: 1; }
 .view-list .swipe-wrapper .card .card-desc { -webkit-line-clamp: 1; }
 
-/* ========== 滑动操作容器 ========== */
-.swipe-wrapper {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius);
+/* ========== 排序模式样式 ========== */
+.sort-banner {
+  position: sticky; top: 115px; z-index: 95;
+  background: linear-gradient(135deg, var(--primary), #8b5cf6);
+  color: #fff; padding: 10px 20px; border-radius: 12px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14px; font-weight: 600; box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+  animation: bannerIn 0.3s ease;
 }
+@keyframes bannerIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.sort-banner button {
+  background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 16px;
+  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.sort-banner button:hover { background: rgba(255,255,255,0.4); }
+
+.sort-mode .swipe-wrapper { cursor: grab; border: 2px dashed var(--primary); }
+.sort-mode .swipe-wrapper:active { cursor: grabbing; }
+.sort-mode .card { cursor: grab !important; }
+.sort-mode .card:hover { transform: none !important; box-shadow: var(--shadow) !important; border-color: var(--border) !important; }
+.sort-mode .card::before { opacity: 0 !important; }
+.sort-mode .drag-handle-badge {
+  display: flex; position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  z-index: 5; font-size: 18px; color: var(--primary); opacity: 0.7; pointer-events: none;
+}
+.view-grid .sort-mode .drag-handle-badge { left: 8px; top: 8px; transform: none; }
+
+.dragging-source { opacity: 0.3; pointer-events: none; }
+.drag-placeholder {
+  border: 2px dashed var(--primary); border-radius: var(--radius);
+  background: rgba(99,102,241,0.08); transition: all 0.15s ease;
+}
+.view-grid .drag-placeholder { min-height: 100px; }
+.view-list .drag-placeholder { min-height: 50px; }
+
+.drag-ghost {
+  position: fixed; z-index: 9999; pointer-events: none;
+  opacity: 0.92; transform: scale(1.03) rotate(1.5deg);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25); border-radius: var(--radius);
+  background: var(--bg-card); border: 1px solid var(--primary);
+}
+
+/* ========== 滑动操作容器 ========== */
+.swipe-wrapper { position: relative; overflow: hidden; border-radius: var(--radius); }
 .swipe-wrapper .card {
-  position: relative;
-  z-index: 2;
+  position: relative; z-index: 2;
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform;
 }
-.swipe-wrapper.swiped .card {
-  transform: translateX(calc(-1 * var(--swipe-distance)));
-}
-.swipe-wrapper.dragging .card {
-  transition: none;
-}
+.swipe-wrapper.swiped .card { transform: translateX(calc(-1 * var(--swipe-distance))); }
+.swipe-wrapper.touch-dragging .card { transition: none; }
 .swipe-actions {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 1;
-  display: flex;
-  align-items: stretch;
-  width: var(--swipe-distance);
+  position: absolute; right: 0; top: 0; bottom: 0; z-index: 1;
+  display: flex; align-items: stretch; width: var(--swipe-distance);
 }
 .swipe-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  border: none;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: filter 0.15s;
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: filter 0.15s;
 }
 .swipe-btn:active { filter: brightness(0.85); }
 .swipe-btn .swipe-icon { font-size: 20px; }
@@ -99,12 +118,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .swipe-btn-move { background: var(--warning); }
 .swipe-btn-delete { background: var(--danger); }
 
-/* 桌面端卡片保持原hover效果 */
 .card { display: flex; flex-direction: column; gap: calc(var(--card-pad) * 0.6); padding: var(--card-pad); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: all 0.25s ease; box-shadow: var(--shadow); position: relative; overflow: hidden; cursor: context-menu; }
 .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), #ec4899); opacity: 0; transition: opacity 0.25s; }
 .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--primary); }
 .card:hover::before { opacity: 1; }
-/* 滑动状态取消hover位移 */
 .swipe-wrapper.swiped .card:hover { transform: translateX(calc(-1 * var(--swipe-distance))); }
 .card-icon { width: var(--icon-size); height: var(--icon-size); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: calc(var(--icon-size) * 0.5); font-weight: 700; flex-shrink: 0; }
 .card-info { min-width: 0; flex: 1; }
@@ -129,8 +146,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .modal { background: var(--modal-bg); border-radius: 16px; padding: 32px; width: 100%; max-width: 540px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); animation: modalIn 0.25s ease; max-height: 90vh; overflow-y: auto; }
 @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-.modal h2 { font-size: 20px; }
-.modal h3 { font-size: 15px; margin-bottom: 8px; }
+.modal h2 { font-size: 20px; } .modal h3 { font-size: 15px; margin-bottom: 8px; }
 .close-btn { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; line-height: 1; }
 .close-btn:hover { color: var(--danger); }
 .subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
@@ -142,13 +158,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 .btn { flex: 1; padding: 11px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; min-width: 80px; }
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
-.btn-danger { background: var(--danger); color: white; }
-.btn-success { background: var(--success); color: white; }
-.btn-warning { background: var(--warning); color: #fff; }
+.btn-primary { background: var(--primary); color: white; } .btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); } .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+.btn-danger { background: var(--danger); color: white; } .btn-success { background: var(--success); color: white; } .btn-warning { background: var(--warning); color: #fff; }
 .btn-sm { padding: 8px 14px; font-size: 13px; min-width: auto; flex: none; }
 .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
@@ -186,22 +198,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .choice-card .choice-title { font-size: 14px; font-weight: 600; }
 .choice-card .choice-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 .text-modal textarea { min-height: 200px; font-family: monospace; font-size: 13px; }
-.sync-info { font-size: 12px; color: var(--text-secondary); padding: 10px 14px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; }
+.sync-info { font-size: 12px; color: var(--text-secondary); padding: 10px 14px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; line-height: 1.8; }
 .rls-alert { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; line-height: 1.6; }
 [data-theme="dark"] .rls-alert { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
 .rls-alert code { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all; display: block; margin: 8px 0; }
 .rls-alert button { margin-top: 6px; padding: 6px 12px; background: var(--danger); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
-
-/* 移动端提示 */
-.swipe-hint {
-  display: none;
-  text-align: center;
-  padding: 8px 16px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
-}
 
 @media (max-width: 768px) {
   .header { padding: 12px 16px; } .header h1 { font-size: 18px; }
@@ -212,11 +213,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   .fab { bottom: 24px; right: 24px; width: 50px; height: 50px; font-size: 24px; }
   .sync-status span { display: none; }
   .choice-grid { grid-template-columns: 1fr; }
-  /* 移动端禁用卡片hover上浮，避免干扰滑动 */
   .card:hover { transform: none; box-shadow: var(--shadow); border-color: var(--border); }
   .card:hover::before { opacity: 0; }
   .swipe-wrapper.swiped .card:hover { transform: translateX(calc(-1 * var(--swipe-distance))); }
-  .swipe-hint { display: block; }
+  .sort-banner { top: 105px; font-size: 13px; padding: 8px 14px; }
 }
 </style>
 </head>
@@ -225,18 +225,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <header class="header">
   <h1>📌 导航页 <div class="sync-status" id="syncStatus"><div class="sync-dot" id="syncDot"></div><span id="syncText">初始化...</span></div></h1>
   <div class="header-actions">
-    <button class="icon-btn" id="btnView" title="切换视图"><span id="viewIcon">▦</span></button>
+    <button class="icon-btn" id="btnView" title="切换视图"><span id="viewIcon">☰</span></button>
     <button class="icon-btn" id="btnTheme" title="切换主题"><span id="themeIcon">🌙</span></button>
+    <button class="icon-btn" id="btnSort" title="排序模式">↕️</button>
     <button class="icon-btn" id="btnSettings" title="设置">⚙️</button>
   </div>
 </header>
 <div class="tabs-wrapper"><div class="tabs" id="tabs"></div></div>
-<div class="swipe-hint" id="swipeHint">👈 左滑卡片可编辑、移动、删除</div>
 <main class="content" id="content"></main>
 <button class="fab" id="btnAdd" title="添加导航">+</button>
 <div class="toast" id="toast"></div>
 
-<!-- 桌面端右键菜单 -->
 <div class="ctx-menu" id="ctxMenu">
   <div class="ctx-item" data-action="edit">✏️ 编辑</div>
   <div class="ctx-item" data-action="move">📂 移动到分组...</div>
@@ -261,8 +260,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <hr class="section-divider">
     <h3>🎚️ 显示密度</h3>
     <div class="density-control">
-      <div class="density-header"><span>卡片紧凑度</span><span class="density-val" id="densityVal">标准</span></div>
-      <input type="range" class="density-slider" id="densitySlider" min="0" max="100" value="50">
+      <div class="density-header"><span>卡片紧凑度</span><span class="density-val" id="densityVal">紧凑</span></div>
+      <input type="range" class="density-slider" id="densitySlider" min="0" max="100" value="0">
       <div class="density-labels"><span>紧凑</span><span>标准</span><span>宽松</span></div>
     </div>
     <hr class="section-divider">
@@ -271,7 +270,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <button class="btn btn-success btn-sm" id="btnUploadToCloud">⬆️ 本地→云端</button>
       <button class="btn btn-warning btn-sm" id="btnDownloadFromCloud">⬇️ 云端→本地</button>
     </div>
-    <div class="sync-info" id="syncInfoText">本地缓存: 0 条</div>
+    <div class="sync-info" id="syncInfoText">统计加载中...</div>
     <hr class="section-divider">
     <h3>📦 数据管理</h3>
     <div class="btn-group">
@@ -279,7 +278,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <button class="btn btn-secondary btn-sm" id="btnExportExcel">📤 导出Excel</button>
       <button class="btn btn-primary btn-sm" id="btnImportJson">📥 导入JSON</button>
       <button class="btn btn-primary btn-sm" id="btnImportExcel">📥 导入Excel</button>
-      <button class="btn btn-secondary btn-sm" id="btnDownloadTemplate">📋 Excel模板</button>
     </div>
     <hr class="section-divider">
     <h3>🔄 格式转换</h3>
@@ -358,16 +356,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <script>
 // ==================== 状态 ====================
 const state = {
-  allData: [], currentCategory: '全部', viewMode: localStorage.getItem('viewMode') || 'grid',
+  allData: [], currentCategory: '全部',
+  viewMode: localStorage.getItem('viewMode') || 'list',
   theme: localStorage.getItem('theme') || 'light', categories: [], isOnline: false,
   mode: localStorage.getItem('nav_mode') || 'online',
-  density: parseInt(localStorage.getItem('nav_density') || '50'),
-  ctxItem: null
+  density: parseInt(localStorage.getItem('nav_density') ?? '0'),
+  ctxItem: null, cloudCount: 0, sortMode: false
 };
 const $ = id => document.getElementById(id);
 const LOCAL_KEY = 'nav_local_data';
-
-// 【关键修复】显式声明 DOM 引用，避免 tabsEl 未定义导致 JS 崩溃
 const tabsEl = $('tabs');
 const contentEl = $('content');
 
@@ -375,10 +372,10 @@ const contentEl = $('content');
 function showToast(msg, d=3000) { const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
 function escapeHtml(s) { return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'):''; }
 function getConfig() { return {url:localStorage.getItem('sb_url')||'', key:localStorage.getItem('sb_key')||''}; }
-function getClient() { 
-  if(!window.supabase) throw new Error('SDK加载中，请稍后再试');
-  const{url,key}=getConfig(); if(!url||!key)throw new Error('未配置'); 
-  return window.supabase.createClient(url,key); 
+function getClient() {
+  if(!window.supabase) throw new Error('SDK加载中');
+  const{url,key}=getConfig(); if(!url||!key)throw new Error('未配置');
+  return window.supabase.createClient(url,key);
 }
 function dateStr() { return new Date().toISOString().slice(0,10); }
 function downloadFile(blob,name) { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
@@ -392,9 +389,9 @@ document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('cli
 function applyDensity(val) {
   const gap = 8 + (val / 100) * 20;
   const pad = 12 + (val / 100) * 16;
-  const icon = 32 + (val / 100) * 20;
-  const fName = 13 + (val / 100) * 5;
-  const fDesc = 11 + (val / 100) * 4;
+  const icon = 34 + (val / 100) * 18;
+  const fName = 14 + (val / 100) * 4;
+  const fDesc = 12 + (val / 100) * 3;
   const lines = val < 33 ? 1 : val < 66 ? 2 : 3;
   const r = document.documentElement.style;
   r.setProperty('--card-gap', gap+'px'); r.setProperty('--card-pad', pad+'px');
@@ -426,34 +423,67 @@ $('modeToggle').onchange = () => {
   updateModeUI(); updateSyncInfo();
   if(state.mode==='offline'){
     updateSyncStatus(false,'离线模式');
-    state.allData=getLocalData();
-    renderAll();
-    showToast('💾 已切换离线模式');
-  } else {
-    loadData(true);
-    showToast('📡 已切换在线模式');
-  }
+    state.allData=getLocalData(); renderAll(); showToast('💾 已切换离线模式');
+  } else { loadData(true); showToast('📡 已切换在线模式'); }
 };
 
-// ==================== 状态指示 ====================
-function updateSyncStatus(on,text) { 
-  state.isOnline=on; 
-  const d=$('syncDot'),t=$('syncText'); 
+// ==================== 状态指示 & 云端统计 ====================
+function updateSyncStatus(on,text) {
+  state.isOnline=on;
+  const d=$('syncDot'),t=$('syncText');
   if(on){d.classList.add('online');t.textContent=text||'云端同步'}
-  else{d.classList.remove('online');t.textContent=text||'离线模式'} 
+  else{d.classList.remove('online');t.textContent=text||'离线模式'}
 }
-function updateSyncInfo() { 
-  $('syncInfoText').textContent=`本地缓存: ${getLocalData().length} 条 | 模式: ${state.mode==='online'?'📡在线':'💾离线'}`; 
+
+async function updateSyncInfo() {
+  const localCount = getLocalData().length;
+  let cloudText = '未连接';
+  if (state.mode === 'online') {
+    try {
+      const client = getClient();
+      const { count, error } = await client.from('nav_links')
+        .select('*', { count: 'exact', head: true }).eq('is_active', true);
+      if (!error && count !== null) { state.cloudCount = count; cloudText = `${count} 条`; }
+      else cloudText = '获取失败';
+    } catch { cloudText = '网络异常'; }
+  } else { cloudText = '离线模式'; }
+  $('syncInfoText').innerHTML =
+    `📱 本地缓存: <strong>${localCount}</strong> 条<br>☁️ 云端数据: <strong>${cloudText}</strong><br>🔗 当前模式: ${state.mode==='online'?'📡在线':'💾离线'}`;
 }
 
 // ==================== 主题&视图 ====================
 function applyTheme() { document.documentElement.setAttribute('data-theme',state.theme); $('themeIcon').textContent=state.theme==='dark'?'☀️':'🌙'; }
 function applyView() { $('viewIcon').textContent=state.viewMode==='grid'?'▦':'☰'; }
 $('btnTheme').onclick=()=>{state.theme=state.theme==='light'?'dark':'light';localStorage.setItem('theme',state.theme);applyTheme()};
-$('btnView').onclick=()=>{state.viewMode=state.viewMode==='grid'?'list':'grid';localStorage.setItem('viewMode',state.viewMode);applyView();renderContent()};
+$('btnView').onclick=()=>{
+  if(state.sortMode){showToast('⚠️ 请先退出排序模式');return}
+  state.viewMode=state.viewMode==='grid'?'list':'grid';localStorage.setItem('viewMode',state.viewMode);applyView();renderContent()
+};
+
+// ==================== ⭐ 排序模式（显式开关 + 幽灵拖拽） ====================
+$('btnSort').onclick = () => {
+  state.sortMode = !state.sortMode;
+  $('btnSort').classList.toggle('active', state.sortMode);
+  if (state.sortMode) {
+    // 进入排序模式时自动切到列表视图
+    if (state.viewMode !== 'list') {
+      state.viewMode = 'list'; localStorage.setItem('viewMode', 'list'); applyView();
+    }
+    resetAllSwipes();
+    renderContent();
+    showToast('↕️ 排序模式已开启，拖拽卡片调整顺序');
+  } else {
+    renderContent();
+    showToast('✅ 排序模式已关闭');
+  }
+};
 
 // ==================== 设置 ====================
-function openSettings() { const c=getConfig(); $('inputUrl').value=c.url; $('inputKey').value=c.key; $('rlsAlertContainer').innerHTML=''; updateModeUI(); updateSyncInfo(); $('densitySlider').value=state.density; applyDensity(state.density); openModal('settingsModal'); }
+function openSettings() {
+  const c=getConfig(); $('inputUrl').value=c.url; $('inputKey').value=c.key;
+  $('rlsAlertContainer').innerHTML=''; updateModeUI(); updateSyncInfo();
+  $('densitySlider').value=state.density; applyDensity(state.density); openModal('settingsModal');
+}
 $('btnSettings').onclick=openSettings;
 $('btnSaveSettings').onclick=async()=>{const u=$('inputUrl').value.trim().replace(/\/+$/,''),k=$('inputKey').value.trim();if(!u||!k){showToast('❌ 请填写完整');return}localStorage.setItem('sb_url',u);localStorage.setItem('sb_key',k);closeModal('settingsModal');await loadData(true)};
 
@@ -467,8 +497,7 @@ function buildCategorySelect(selectEl, customGroupEl, customInputEl, selectedCat
     customGroupEl.style.display = isCustom ? 'block' : 'none';
     if(isCustom) customInputEl.focus();
   };
-  selectEl.onchange = toggleCustom;
-  toggleCustom();
+  selectEl.onchange = toggleCustom; toggleCustom();
 }
 function getSelectedCategory(selectEl, customInputEl) {
   if(selectEl.value === '__custom__') { const v = customInputEl.value.trim(); return v || '未分类'; }
@@ -477,16 +506,14 @@ function getSelectedCategory(selectEl, customInputEl) {
 
 // ==================== 添加/编辑 ====================
 $('btnAdd').onclick = () => {
-  $('editId').value = '';
-  $('addModalTitle').textContent = '➕ 添加导航';
+  $('editId').value = ''; $('addModalTitle').textContent = '➕ 添加导航';
   $('addModalSubtitle').textContent = '新增记录将立即同步。';
   $('addName').value=''; $('addUrl').value=''; $('addDesc').value=''; $('addCategoryCustom').value='';
   buildCategorySelect($('addCategorySelect'), $('customCatGroup'), $('addCategoryCustom'), '');
   openModal('addModal');
 };
 function openEditModal(item) {
-  $('editId').value = item.id;
-  $('addModalTitle').textContent = '✏️ 编辑导航';
+  $('editId').value = item.id; $('addModalTitle').textContent = '✏️ 编辑导航';
   $('addModalSubtitle').textContent = '修改后自动同步。';
   $('addName').value = item.name||''; $('addUrl').value = item.url||''; $('addDesc').value = item.description||'';
   $('addCategoryCustom').value='';
@@ -496,8 +523,7 @@ function openEditModal(item) {
 $('btnSaveAdd').onclick = async () => {
   const name=$('addName').value.trim(), url=$('addUrl').value.trim();
   const category = getSelectedCategory($('addCategorySelect'), $('addCategoryCustom'));
-  const description=$('addDesc').value.trim();
-  const editId = $('editId').value;
+  const description=$('addDesc').value.trim(); const editId = $('editId').value;
   if(!name||!url){showToast('❌ 名称和网址必填');return}
   if(editId) {
     if(state.isOnline && !String(editId).startsWith('local_')) {
@@ -530,131 +556,234 @@ function showCtxMenu(x, y, item) {
 function hideCtxMenu() { ctxMenu.classList.remove('show'); state.ctxItem=null; }
 document.addEventListener('click', e => { if(!ctxMenu.contains(e.target)) hideCtxMenu(); });
 document.addEventListener('contextmenu', e => {
+  if (state.sortMode) { e.preventDefault(); return; }
   const card = e.target.closest('.card');
-  if(card) {
-    e.preventDefault();
-    const item = state.allData.find(i=>String(i.id)===String(card.dataset.id));
-    if(item) showCtxMenu(e.clientX, e.clientY, item);
-  } else {
-    hideCtxMenu();
-  }
+  if(card) { e.preventDefault(); const item = state.allData.find(i=>String(i.id)===String(card.dataset.id)); if(item) showCtxMenu(e.clientX, e.clientY, item); }
+  else hideCtxMenu();
 });
 ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
   el.onclick = () => { const action=el.dataset.action, item=state.ctxItem; hideCtxMenu(); if(!item)return; if(action==='edit')openEditModal(item); else if(action==='delete')deleteLink(item.id,item.name); else if(action==='move')openMoveModal(item); };
 });
 
-// ==================== 📱 移动端左滑动操作 ====================
-let swipeActiveWrapper = null; // 当前展开的滑动容器
+// ==================== 📱 移动端左滑动（非排序模式） ====================
+let swipeActiveWrapper = null;
 let swipeStartX = 0, swipeStartY = 0, swipeCurrentX = 0, isSwiping = false, swipeDirectionLocked = false;
 
 function initSwipeListeners() {
-  contentEl.addEventListener('touchstart', handleSwipeStart, {passive: true});
-  contentEl.addEventListener('touchmove', handleSwipeMove, {passive: false});
-  contentEl.addEventListener('touchend', handleSwipeEnd, {passive: true});
-  // 点击其他区域收回已展开的卡片
+  contentEl.addEventListener('touchstart', handleTouchStart, {passive: true});
+  contentEl.addEventListener('touchmove', handleTouchMove, {passive: false});
+  contentEl.addEventListener('touchend', handleTouchEnd, {passive: true});
   document.addEventListener('touchstart', e => {
-    if (swipeActiveWrapper && !swipeActiveWrapper.contains(e.target)) {
-      resetSwipe(swipeActiveWrapper);
-    }
+    if (swipeActiveWrapper && !swipeActiveWrapper.contains(e.target)) resetSwipe(swipeActiveWrapper);
   }, {passive: true});
 }
 
-function handleSwipeStart(e) {
+function handleTouchStart(e) {
+  if (state.sortMode) return;
   const wrapper = e.target.closest('.swipe-wrapper');
   if (!wrapper) return;
-  // 如果点击的是已展开卡片的其他位置，先收回
-  if (swipeActiveWrapper && swipeActiveWrapper !== wrapper) {
-    resetSwipe(swipeActiveWrapper);
-  }
-  const touch = e.touches[0];
-  swipeStartX = touch.clientX;
-  swipeStartY = touch.clientY;
-  swipeCurrentX = touch.clientX;
-  isSwiping = false;
-  swipeDirectionLocked = false;
+  if (swipeActiveWrapper && swipeActiveWrapper !== wrapper) resetSwipe(swipeActiveWrapper);
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+  swipeCurrentX = swipeStartX;
+  isSwiping = false; swipeDirectionLocked = false;
 }
 
-function handleSwipeMove(e) {
+function handleTouchMove(e) {
+  if (state.sortMode) return;
   const wrapper = e.target.closest('.swipe-wrapper');
   if (!wrapper) return;
-  const touch = e.touches[0];
-  const dx = touch.clientX - swipeStartX;
-  const dy = touch.clientY - swipeStartY;
-
-  // 方向锁定：首次移动超过8px时判断方向
+  const dx = e.touches[0].clientX - swipeStartX;
+  const dy = e.touches[0].clientY - swipeStartY;
   if (!swipeDirectionLocked) {
     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
     swipeDirectionLocked = true;
-    // 纵向滑动为主，放弃横向处理
-    if (Math.abs(dy) > Math.abs(dx)) {
-      isSwiping = false;
-      return;
-    }
+    if (Math.abs(dy) > Math.abs(dx)) { isSwiping = false; return; }
     isSwiping = true;
   }
-
   if (!isSwiping) return;
-  e.preventDefault(); // 阻止页面横向滚动
-
-  swipeCurrentX = touch.clientX;
-  const moveX = Math.min(0, Math.max(-180, swipeCurrentX - swipeStartX));
-
-  // 如果卡片已经展开，需要加上已展开的偏移
+  e.preventDefault();
+  swipeCurrentX = e.touches[0].clientX;
+  const maxSwipe = 180;
+  const moveX = Math.min(0, Math.max(-maxSwipe, swipeCurrentX - swipeStartX));
   if (wrapper.classList.contains('swiped')) {
-    const totalMove = Math.min(0, Math.max(-180, -180 + (swipeCurrentX - swipeStartX)));
-    wrapper.querySelector('.card').style.transform = `translateX(${totalMove}px)`;
+    wrapper.querySelector('.card').style.transform = `translateX(${Math.min(0, Math.max(-maxSwipe, -maxSwipe + (swipeCurrentX - swipeStartX)))}px)`;
   } else {
-    wrapper.classList.add('dragging');
+    wrapper.classList.add('touch-dragging');
     wrapper.querySelector('.card').style.transform = `translateX(${moveX}px)`;
   }
 }
 
-function handleSwipeEnd(e) {
+function handleTouchEnd(e) {
+  if (state.sortMode) return;
   const wrapper = e.target.closest('.swipe-wrapper');
-  if (!wrapper || !isSwiping) {
-    isSwiping = false;
-    swipeDirectionLocked = false;
-    return;
-  }
-
-  wrapper.classList.remove('dragging');
+  if (!wrapper || !isSwiping) { isSwiping = false; swipeDirectionLocked = false; return; }
+  wrapper.classList.remove('touch-dragging');
   const card = wrapper.querySelector('.card');
   const dx = swipeCurrentX - swipeStartX;
-  const threshold = -50; // 滑动超过50px就展开
-
   if (wrapper.classList.contains('swiped')) {
-    // 已展开状态：向右滑收回
-    if (dx > 50) {
-      resetSwipe(wrapper);
-    } else {
-      card.style.transform = '';
-      // 保持展开
-    }
+    if (dx > 50) resetSwipe(wrapper); else card.style.transform = '';
   } else {
-    // 未展开状态：向左滑展开
-    if (dx < threshold) {
-      wrapper.classList.add('swiped');
-      card.style.transform = '';
-      swipeActiveWrapper = wrapper;
-    } else {
-      card.style.transform = '';
-    }
+    if (dx < -50) { wrapper.classList.add('swiped'); card.style.transform = ''; swipeActiveWrapper = wrapper; }
+    else card.style.transform = '';
   }
-
-  isSwiping = false;
-  swipeDirectionLocked = false;
+  isSwiping = false; swipeDirectionLocked = false;
 }
 
 function resetSwipe(wrapper) {
   if (!wrapper) return;
-  wrapper.classList.remove('swiped', 'dragging');
+  wrapper.classList.remove('swiped', 'touch-dragging');
   const card = wrapper.querySelector('.card');
   if (card) card.style.transform = '';
   if (swipeActiveWrapper === wrapper) swipeActiveWrapper = null;
 }
+function resetAllSwipes() { document.querySelectorAll('.swipe-wrapper.swiped').forEach(w => resetSwipe(w)); }
 
-function resetAllSwipes() {
-  document.querySelectorAll('.swipe-wrapper.swiped').forEach(w => resetSwipe(w));
+// ==================== ⭐ 统一拖拽排序系统（幽灵跟随） ====================
+let drag = {
+  active: false, sourceWrapper: null, ghost: null, placeholder: null,
+  sourceId: null, offsetX: 0, offsetY: 0, lastOverId: null
+};
+
+function initDragListeners() {
+  // PC鼠标
+  contentEl.addEventListener('mousedown', e => {
+    if (!state.sortMode) return;
+    const wrapper = e.target.closest('.swipe-wrapper');
+    if (!wrapper) return;
+    e.preventDefault();
+    startDrag(wrapper, e.clientX, e.clientY, false);
+  });
+  document.addEventListener('mousemove', e => {
+    if (!drag.active) return;
+    e.preventDefault();
+    moveDrag(e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseup', () => { if (drag.active) endDrag(); });
+  document.addEventListener('mouseleave', () => { if (drag.active) endDrag(); });
+
+  // 移动端触摸
+  contentEl.addEventListener('touchstart', e => {
+    if (!state.sortMode) return;
+    const wrapper = e.target.closest('.swipe-wrapper');
+    if (!wrapper) return;
+    startDrag(wrapper, e.touches[0].clientX, e.touches[0].clientY, true);
+  }, {passive: true});
+  document.addEventListener('touchmove', e => {
+    if (!drag.active) return;
+    e.preventDefault();
+    moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+  }, {passive: false});
+  document.addEventListener('touchend', () => { if (drag.active) endDrag(); });
+}
+
+function startDrag(wrapper, clientX, clientY, isTouch) {
+  resetAllSwipes();
+  const rect = wrapper.getBoundingClientRect();
+  drag.active = true;
+  drag.sourceWrapper = wrapper;
+  drag.sourceId = wrapper.dataset.id;
+  drag.offsetX = clientX - rect.left;
+  drag.offsetY = clientY - rect.top;
+
+  // 幽灵元素
+  const ghost = wrapper.cloneNode(true);
+  ghost.className = 'drag-ghost';
+  ghost.style.width = rect.width + 'px';
+  ghost.style.height = rect.height + 'px';
+  ghost.style.left = rect.left + 'px';
+  ghost.style.top = rect.top + 'px';
+  const gCard = ghost.querySelector('.card');
+  if (gCard) { gCard.style.transform = ''; gCard.style.cursor = 'grabbing'; }
+  document.body.appendChild(ghost);
+  drag.ghost = ghost;
+
+  wrapper.classList.add('dragging-source');
+
+  // 占位符
+  const ph = document.createElement('div');
+  ph.className = 'drag-placeholder';
+  ph.style.height = rect.height + 'px';
+  drag.placeholder = ph;
+  wrapper.parentNode.insertBefore(ph, wrapper);
+  wrapper.style.display = 'none';
+
+  if (isTouch && navigator.vibrate) navigator.vibrate(30);
+}
+
+function moveDrag(clientX, clientY) {
+  if (!drag.active || !drag.ghost) return;
+  drag.ghost.style.left = (clientX - drag.offsetX) + 'px';
+  drag.ghost.style.top = (clientY - drag.offsetY) + 'px';
+
+  const wrappers = Array.from(contentEl.querySelectorAll('.swipe-wrapper:not(.dragging-source)'));
+  for (const w of wrappers) {
+    const rect = w.getBoundingClientRect();
+    if (clientY >= rect.top && clientY <= rect.bottom) {
+      if (drag.lastOverId !== w.dataset.id) {
+        drag.lastOverId = w.dataset.id;
+        const midY = rect.top + rect.height / 2;
+        if (clientY < midY) w.parentNode.insertBefore(drag.placeholder, w);
+        else w.parentNode.insertBefore(drag.placeholder, w.nextSibling);
+      }
+      break;
+    }
+  }
+}
+
+async function endDrag() {
+  if (!drag.active) return;
+  const wrapper = drag.sourceWrapper;
+  const ghost = drag.ghost;
+  const placeholder = drag.placeholder;
+
+  // 飞回动画
+  if (ghost && placeholder) {
+    const phRect = placeholder.getBoundingClientRect();
+    ghost.style.transition = 'all 0.2s ease';
+    ghost.style.left = phRect.left + 'px';
+    ghost.style.top = phRect.top + 'px';
+    ghost.style.transform = 'scale(1) rotate(0deg)';
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  if (ghost) ghost.remove();
+  if (placeholder && placeholder.parentNode) {
+    placeholder.parentNode.insertBefore(wrapper, placeholder);
+    placeholder.remove();
+  }
+  wrapper.style.display = '';
+  wrapper.classList.remove('dragging-source');
+
+  const newOrder = Array.from(contentEl.querySelectorAll('.swipe-wrapper')).map(w => w.dataset.id);
+  drag = { active: false, sourceWrapper: null, ghost: null, placeholder: null, sourceId: null, offsetX: 0, offsetY: 0, lastOverId: null };
+
+  // 更新数据顺序
+  const orderedData = [];
+  for (const id of newOrder) {
+    const item = state.allData.find(d => String(d.id) === String(id));
+    if (item) orderedData.push(item);
+  }
+  state.allData.forEach(d => { if (!newOrder.includes(String(d.id))) orderedData.push(d); });
+  state.allData = orderedData;
+  saveLocalData(state.allData);
+
+  // 后台同步
+  if (state.isOnline) {
+    try {
+      const client = getClient();
+      const updates = newOrder.map((id, idx) =>
+        client.from('nav_links').update({ sort_order: idx }).eq('id', id)
+      );
+      await Promise.all(updates);
+      showToast('✅ 排序已同步云端');
+    } catch (err) {
+      console.warn('排序同步失败:', err);
+      showToast('⚠️ 排序已保存本地');
+    }
+  } else {
+    showToast('✅ 排序已保存');
+  }
 }
 
 // ==================== 移动分组 ====================
@@ -705,7 +834,6 @@ $('btnConfirmTextImport').onclick=async()=>{const t=$('textImportArea').value.tr
 $('btnExportExcel').onclick=()=>{if(!state.allData.length||typeof XLSX==='undefined'){showToast('⚠️ 无数据或Excel库未就绪');return}const ws=XLSX.utils.json_to_sheet(state.allData.map(d=>({name:d.name,url:d.url,category:d.category||'',description:d.description||''})));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'导航');XLSX.writeFile(wb,`nav_${dateStr()}.xlsx`);showToast('✅ Excel已导出')};
 $('btnImportExcel').onclick=()=>$('fileInputExcel').click();
 $('fileInputExcel').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(typeof XLSX==='undefined'){showToast('❌ Excel库未就绪');return}try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const n=await batchInsert(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));showToast(`✅ 导入${n}条`);closeModal('settingsModal');loadData()}catch(err){handleDbError(err,'导入')}e.target.value=''};
-$('btnDownloadTemplate').onclick=()=>{if(typeof XLSX==='undefined'){showToast('❌ Excel库未就绪');return}const ws=XLSX.utils.json_to_sheet([{name:'示例',url:'https://example.com',category:'工具',description:'描述'}]);ws['!cols']=[{wch:20},{wch:40},{wch:15},{wch:30}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'模板');XLSX.writeFile(wb,'nav_template.xlsx')};
 async function batchInsert(items) {
   const valid=items.filter(i=>i.name&&i.url).map(i=>({name:String(i.name).trim(),url:String(i.url).trim(),category:String(i.category||'未分类').trim(),description:String(i.description||'').trim(),is_active:true}));
   if(!valid.length)throw new Error('无有效记录');
@@ -714,8 +842,8 @@ async function batchInsert(items) {
 }
 
 // 同步
-$('btnUploadToCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ 请先切在线模式');return}const local=getLocalData();if(!local.length){showToast('⚠️ 本地无数据');return}if(!confirm(`上传${local.length}条到云端？`))return;try{const items=local.map(i=>({name:i.name,url:i.url,category:i.category||'未分类',description:i.description||'',is_active:true}));const{error}=await getClient().from('nav_links').insert(items);if(error)throw error;showToast(`✅ 已上传${items.length}条`);loadData(true)}catch(err){handleDbError(err,'上传')}};
-$('btnDownloadFromCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ 请先切在线模式');return}if(!confirm('从云端覆盖本地？'))return;try{const{data,error}=await getClient().from('nav_links').select('id,name,url,category,description').eq('is_active',true);if(error)throw error;saveLocalData(data||[]);state.allData=data||[];renderAll();updateSyncInfo();showToast(`✅ 已拉取${(data||[]).length}条`)}catch(err){handleDbError(err,'拉取')}};
+$('btnUploadToCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ 请先切在线模式');return}const local=getLocalData();if(!local.length){showToast('⚠️ 本地无数据');return}if(!confirm(`上传${local.length}条到云端？`))return;try{const items=local.map(i=>({name:i.name,url:i.url,category:i.category||'未分类',description:i.description||'',is_active:true}));const{error}=await getClient().from('nav_links').insert(items);if(error)throw error;showToast(`✅ 已上传${items.length}条`);loadData(true);updateSyncInfo()}catch(err){handleDbError(err,'上传')}};
+$('btnDownloadFromCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ 请先切在线模式');return}if(!confirm('从云端覆盖本地？'))return;try{const{data,error}=await getClient().from('nav_links').select('id,name,url,category,description').eq('is_active',true).order('sort_order',{ascending:true});if(error)throw error;saveLocalData(data||[]);state.allData=data||[];renderAll();updateSyncInfo();showToast(`✅ 已拉取${(data||[]).length}条`)}catch(err){handleDbError(err,'拉取')}};
 
 // 转换
 $('btnJsonToExcel').onclick=()=>$('fileInputConvertJson').click();
@@ -727,14 +855,12 @@ $('fileInputConvertExcel').onchange=async e=>{const f=e.target.files[0];if(!f)re
 function renderAll() {
   if(!state.allData.length){
     showState(state.mode==='offline'?'💾':'📭','暂无数据','点击 + 添加第一条导航');
-    tabsEl.innerHTML='';
-    return;
+    tabsEl.innerHTML=''; return;
   }
   const catSet=new Set(state.allData.map(d=>d.category||'未分类'));
   state.categories=['全部',...Array.from(catSet).sort()];
   if(!state.categories.includes(state.currentCategory))state.currentCategory='全部';
-  renderTabs();
-  renderContent();
+  renderTabs(); renderContent();
 }
 
 function renderTabs() {
@@ -743,31 +869,50 @@ function renderTabs() {
     return `<button class="tab ${cat===state.currentCategory?'active':''}" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}<span class="count">(${count})</span></button>`;
   }).join('');
   tabsEl.querySelectorAll('.tab').forEach(btn => {
-    btn.onclick = () => {
-      state.currentCategory = btn.dataset.cat;
-      renderTabs();
-      renderContent();
-    };
+    btn.onclick = () => { state.currentCategory = btn.dataset.cat; renderTabs(); renderContent(); };
   });
 }
 
 function renderContent() {
   const filtered = state.currentCategory === '全部' ? state.allData : state.allData.filter(d => (d.category||'未分类') === state.currentCategory);
-  if(!filtered.length) {
-    contentEl.innerHTML = `<div class="state-box"><div class="icon">🔍</div><div class="title">该分类下暂无内容</div></div>`;
-    return;
-  }
+  if(!filtered.length) { contentEl.innerHTML = `<div class="state-box"><div class="icon">🔍</div><div class="title">该分类下暂无内容</div></div>`; return; }
+
   const cls = state.viewMode === 'grid' ? 'view-grid' : 'view-list';
-  contentEl.innerHTML = `<div class="${cls}">${filtered.map(item => swipeCardHtml(item)).join('')}</div>`;
-  // 绑定滑动按钮事件
-  bindSwipeButtonEvents();
+  const sortClass = state.sortMode ? ' sort-mode' : '';
+
+  let bannerHtml = '';
+  if (state.sortMode) {
+    bannerHtml = `<div class="sort-banner">
+      <span>↕️ 拖拽卡片调整顺序</span>
+      <button id="btnExitSort">✅ 完成排序</button>
+    </div>`;
+  }
+
+  contentEl.innerHTML = bannerHtml + `<div class="${cls}${sortClass}">${filtered.map(item => cardHtml(item)).join('')}</div>`;
+
+  if (state.sortMode) {
+    const exitBtn = $('btnExitSort');
+    if (exitBtn) exitBtn.onclick = () => { $('btnSort').click(); };
+  }
+
+  if (!state.sortMode) bindSwipeButtonEvents();
 }
 
-// 卡片HTML（包裹在滑动容器中）
-function swipeCardHtml(item) {
+function cardHtml(item) {
   const name = escapeHtml(item.name||'未命名'), desc = escapeHtml(item.description||''), initial = name.charAt(0).toUpperCase();
   const colors = [['#6366f1','#8b5cf6'],['#ec4899','#f43f5e'],['#14b8a6','#06b6d4'],['#f59e0b','#f97316'],['#10b981','#059669'],['#3b82f6','#6366f1']];
   const c = colors[name.length % colors.length];
+
+  if (state.sortMode) {
+    return `<div class="swipe-wrapper" data-id="${item.id}" style="overflow:visible;">
+      <div class="drag-handle-badge">⠿</div>
+      <div class="card" data-id="${item.id}" style="cursor:grab;">
+        <div class="card-icon" style="background:linear-gradient(135deg,${c[0]},${c[1]})">${initial}</div>
+        <div class="card-info"><div class="card-name">${name}</div>${desc?`<div class="card-desc">${desc}</div>`:''}</div>
+      </div>
+    </div>`;
+  }
+
   return `<div class="swipe-wrapper" data-id="${item.id}">
     <a class="card" href="${item.url}" target="_blank" rel="noopener" data-id="${item.id}">
       <div class="card-icon" style="background:linear-gradient(135deg,${c[0]},${c[1]})">${initial}</div>
@@ -781,14 +926,11 @@ function swipeCardHtml(item) {
   </div>`;
 }
 
-// 绑定滑动按钮点击事件
 function bindSwipeButtonEvents() {
   contentEl.querySelectorAll('.swipe-btn').forEach(btn => {
     btn.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      const action = btn.dataset.action;
-      const id = btn.dataset.id;
+      e.preventDefault(); e.stopPropagation();
+      const action = btn.dataset.action, id = btn.dataset.id;
       const item = state.allData.find(i => String(i.id) === String(id));
       if (!item) return;
       resetAllSwipes();
@@ -799,102 +941,65 @@ function bindSwipeButtonEvents() {
   });
 }
 
-function showState(icon, title, desc) {
-  contentEl.innerHTML = `<div class="state-box"><div class="icon">${icon}</div><div class="title">${title}</div><div class="desc">${desc}</div></div>`;
-}
+function showState(icon, title, desc) { contentEl.innerHTML = `<div class="state-box"><div class="icon">${icon}</div><div class="title">${title}</div><div class="desc">${desc}</div></div>`; }
 
 // ==================== ⭐ 核心加载逻辑 ====================
 async function loadData(force=false) {
   if (state.mode === 'offline') {
     updateSyncStatus(false, '离线模式');
-    state.allData = getLocalData();
-    renderAll();
-    return;
+    state.allData = getLocalData(); renderAll(); updateSyncInfo(); return;
   }
-
   const {url, key} = getConfig();
   if (!url || !key) {
     updateSyncStatus(false, '未配置');
     const cached = getLocalData();
-    if (cached.length > 0) {
-      state.allData = cached;
-      renderAll();
-    } else {
-      showState('⚙️', '请先配置数据库', '点击 ⚙️ 填写 Supabase 连接信息');
-      tabsEl.innerHTML = '';
-    }
-    return;
+    if (cached.length > 0) { state.allData = cached; renderAll(); }
+    else { showState('⚙️', '请先配置数据库', '点击 ⚙️ 填写 Supabase 连接信息'); tabsEl.innerHTML = ''; }
+    updateSyncInfo(); return;
   }
-
   const cached = getLocalData();
   if (cached.length > 0 && !force) {
-    state.allData = cached;
-    renderAll();
-    updateSyncStatus(false, '同步中...');
+    state.allData = cached; renderAll(); updateSyncStatus(false, '同步中...');
   }
-
   try {
-    if (!window.supabase) {
-      await new Promise(r => setTimeout(r, 1000));
-      if (!window.supabase) throw new Error('SDK 加载超时');
-    }
+    if (!window.supabase) { await new Promise(r => setTimeout(r, 1000)); if (!window.supabase) throw new Error('SDK 加载超时'); }
     const client = getClient();
     const {data, error} = await client.from('nav_links')
       .select('id,name,url,category,description')
       .eq('is_active', true)
       .order('sort_order', {ascending: true});
-    
     if (!error && data) {
-      saveLocalData(data);
-      state.allData = data;
-      updateSyncStatus(true, '云端同步');
-      renderAll();
-    } else {
-      throw error;
-    }
+      saveLocalData(data); state.allData = data;
+      updateSyncStatus(true, '云端同步'); renderAll();
+    } else throw error;
   } catch (err) {
     console.warn('后台同步失败:', err);
-    if (cached && cached.length > 0) {
-      updateSyncStatus(false, '离线(缓存)');
-    } else {
-      updateSyncStatus(false, '连接失败');
-      showState('🔴', '连接失败', err.message || '请检查网络或 Key 配置');
-      tabsEl.innerHTML = '';
-    }
+    if (cached && cached.length > 0) updateSyncStatus(false, '离线(缓存)');
+    else { updateSyncStatus(false, '连接失败'); showState('🔴', '连接失败', err.message || '请检查网络或 Key 配置'); tabsEl.innerHTML = ''; }
   }
+  updateSyncInfo();
 }
 
-// ==================== 🚀 同步初始化 ====================
+// ==================== 🚀 初始化 ====================
 (function init() {
-  applyTheme();
-  applyView();
-  updateModeUI();
-  initSwipeListeners(); // 初始化滑动手势监听
+  applyTheme(); applyView(); updateModeUI();
+  initSwipeListeners();
+  initDragListeners();
 
   const cached = getLocalData();
   if (cached.length > 0) {
-    state.allData = cached;
-    renderAll();
+    state.allData = cached; renderAll();
     updateSyncStatus(false, state.mode === 'online' ? '同步中...' : '离线模式');
   } else {
-    if (state.mode === 'offline') {
-      updateSyncStatus(false, '离线模式');
-      showState('💾', '暂无本地数据', '切换到在线模式或导入数据');
-    } else {
+    if (state.mode === 'offline') { updateSyncStatus(false, '离线模式'); showState('💾', '暂无本地数据', '切换到在线模式或导入数据'); }
+    else {
       const {url, key} = getConfig();
-      if (!url || !key) {
-        updateSyncStatus(false, '未配置');
-        showState('⚙️', '欢迎使用', '点击右上角 ⚙️ 配置数据库或导入数据');
-      } else {
-        updateSyncStatus(false, '加载中...');
-        showState('⏳', '正在加载...', '首次访问需等待数据加载');
-      }
+      if (!url || !key) { updateSyncStatus(false, '未配置'); showState('⚙️', '欢迎使用', '点击右上角 ⚙️ 配置数据库或导入数据'); }
+      else { updateSyncStatus(false, '加载中...'); showState('⏳', '正在加载...', '首次访问需等待数据加载'); }
     }
   }
-
-  if (state.mode === 'online') {
-    loadData();
-  }
+  if (state.mode === 'online') loadData();
+  else updateSyncInfo();
 })();
 </script>
 </body>
