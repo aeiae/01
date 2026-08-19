@@ -13,7 +13,6 @@
   --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-hover: 0 10px 25px rgba(99,102,241,0.15);
   --radius: 12px; --modal-bg: #ffffff; --overlay: rgba(0,0,0,0.4);
   --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
-  /* 默认紧凑参数 */
   --card-gap: 8px; --card-pad: 12px; --icon-size: 34px; --font-name: 14px; --font-desc: 12px; --desc-lines: 1;
   --swipe-distance: 180px;
 }
@@ -95,18 +94,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   background: var(--bg-card); border: 1px solid var(--primary);
 }
 
-/* ========== 滑动操作容器 ========== */
-.swipe-wrapper { position: relative; overflow: hidden; border-radius: var(--radius); }
+/* ========== 滑动操作容器（修复溢出） ========== */
+.swipe-wrapper { 
+  position: relative; overflow: hidden; border-radius: var(--radius); 
+  /* 关键修复：确保圆角裁剪生效，防止内部彩色按钮溢出 */
+  isolation: isolate;
+}
 .swipe-wrapper .card {
-  position: relative; z-index: 2;
+  position: relative; z-index: 2; background: var(--bg-card);
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  will-change: transform;
+  will-change: transform; border-radius: var(--radius);
 }
 .swipe-wrapper.swiped .card { transform: translateX(calc(-1 * var(--swipe-distance))); }
 .swipe-wrapper.touch-dragging .card { transition: none; }
 .swipe-actions {
   position: absolute; right: 0; top: 0; bottom: 0; z-index: 1;
   display: flex; align-items: stretch; width: var(--swipe-distance);
+  border-radius: 0 var(--radius) var(--radius) 0; overflow: hidden;
 }
 .swipe-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -177,6 +181,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .online-fields { overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s; }
 .online-fields.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; pointer-events: none; }
 
+/* 分组管理列表 */
+.cat-manage-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 16px; }
+.cat-manage-item {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  font-size: 14px; transition: border-color 0.2s;
+}
+.cat-manage-item.default-cat { border-color: var(--primary); background: rgba(99,102,241,0.05); }
+.cat-manage-item .cat-name { flex: 1; font-weight: 500; }
+.cat-manage-item .cat-count { font-size: 12px; color: var(--text-secondary); margin-right: 4px; }
+.cat-manage-item .cat-actions { display: flex; gap: 4px; }
+.cat-manage-item .cat-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg-card); color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.15s;
+}
+.cat-manage-item .cat-btn:hover { border-color: var(--primary); color: var(--primary); }
+.cat-manage-item .cat-btn.btn-del:hover { border-color: var(--danger); color: var(--danger); }
+.cat-manage-item .cat-btn.btn-default { color: var(--warning); border-color: var(--warning); }
+.cat-manage-item.default-cat .cat-btn.btn-default { background: var(--warning); color: #fff; }
+
 .density-control { padding: 14px 16px; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; }
 .density-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .density-header span { font-size: 14px; font-weight: 600; }
@@ -246,7 +271,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <div class="modal-header"><h2>⚙️ 设置中心</h2><button class="close-btn" onclick="closeModal('settingsModal')">&times;</button></div>
-    <p class="subtitle">管理连接、显示密度与数据。</p>
+    <p class="subtitle">管理连接、分组、显示密度与数据。</p>
     <div id="rlsAlertContainer"></div>
     <div class="mode-switch">
       <div><div class="mode-label" id="modeLabelText">📡 在线模式</div><div class="mode-desc" id="modeDescText">连接 Supabase 云端数据库</div></div>
@@ -257,6 +282,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="form-group"><label>Anon Key</label><input type="text" id="inputKey" placeholder="eyJhbGciOiJIUzI1NiIs..."></div>
       <div class="modal-actions"><button class="btn btn-primary" id="btnSaveSettings">💾 保存并连接</button></div>
     </div>
+    <hr class="section-divider">
+    <h3>📂 分组管理</h3>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">拖拽排序 · 点击⭐设为默认 · ✏️改名</p>
+    <div class="cat-manage-list" id="catManageList"></div>
     <hr class="section-divider">
     <h3>🎚️ 显示密度</h3>
     <div class="density-control">
@@ -361,6 +390,8 @@ const state = {
   theme: localStorage.getItem('theme') || 'light', categories: [], isOnline: false,
   mode: localStorage.getItem('nav_mode') || 'online',
   density: parseInt(localStorage.getItem('nav_density') ?? '0'),
+  defaultCategory: localStorage.getItem('nav_default_cat') || '全部',
+  catOrder: JSON.parse(localStorage.getItem('nav_cat_order') || '[]'),
   ctxItem: null, cloudCount: 0, sortMode: false
 };
 const $ = id => document.getElementById(id);
@@ -415,7 +446,8 @@ function updateModeUI() {
   $('modeLabelText').textContent = on?'📡 在线模式':'💾 离线模式';
   $('modeDescText').textContent = on?'连接 Supabase 云端数据库':'仅使用浏览器本地存储';
   const f=$('onlineFields');
-  if(on){f.classList.remove('hidden');f.style.maxHeight='300px'}else{f.classList.add('hidden')}
+  // 【修改4】在线模式下隐藏URL和Key输入框
+  if(on){f.classList.add('hidden')}else{f.classList.remove('hidden');f.style.maxHeight='300px'}
 }
 $('modeToggle').onchange = () => {
   state.mode = $('modeToggle').checked?'online':'offline';
@@ -460,12 +492,11 @@ $('btnView').onclick=()=>{
   state.viewMode=state.viewMode==='grid'?'list':'grid';localStorage.setItem('viewMode',state.viewMode);applyView();renderContent()
 };
 
-// ==================== ⭐ 排序模式（显式开关 + 幽灵拖拽） ====================
+// ==================== ⭐ 排序模式 ====================
 $('btnSort').onclick = () => {
   state.sortMode = !state.sortMode;
   $('btnSort').classList.toggle('active', state.sortMode);
   if (state.sortMode) {
-    // 进入排序模式时自动切到列表视图
     if (state.viewMode !== 'list') {
       state.viewMode = 'list'; localStorage.setItem('viewMode', 'list'); applyView();
     }
@@ -482,14 +513,114 @@ $('btnSort').onclick = () => {
 function openSettings() {
   const c=getConfig(); $('inputUrl').value=c.url; $('inputKey').value=c.key;
   $('rlsAlertContainer').innerHTML=''; updateModeUI(); updateSyncInfo();
-  $('densitySlider').value=state.density; applyDensity(state.density); openModal('settingsModal');
+  $('densitySlider').value=state.density; applyDensity(state.density);
+  renderCatManageList();
+  openModal('settingsModal');
 }
 $('btnSettings').onclick=openSettings;
 $('btnSaveSettings').onclick=async()=>{const u=$('inputUrl').value.trim().replace(/\/+$/,''),k=$('inputKey').value.trim();if(!u||!k){showToast('❌ 请填写完整');return}localStorage.setItem('sb_url',u);localStorage.setItem('sb_key',k);closeModal('settingsModal');await loadData(true)};
 
+// ==================== ⭐ 分组管理（排序/改名/默认） ====================
+function getOrderedCategories() {
+  const catSet = new Set(state.allData.map(d => d.category || '未分类'));
+  const allCats = ['全部', ...Array.from(catSet).sort()];
+  // 按用户自定义顺序排列
+  const ordered = [];
+  for (const c of state.catOrder) {
+    if (allCats.includes(c)) ordered.push(c);
+  }
+  for (const c of allCats) {
+    if (!ordered.includes(c)) ordered.push(c);
+  }
+  return ordered;
+}
+
+function renderCatManageList() {
+  const cats = getOrderedCategories();
+  const list = $('catManageList');
+  list.innerHTML = cats.map((cat, idx) => {
+    const count = cat === '全部' ? state.allData.length : state.allData.filter(d => (d.category||'未分类') === cat).length;
+    const isDefault = cat === state.defaultCategory;
+    const isFirst = idx === 0;
+    const isLast = idx === cats.length - 1;
+    return `<div class="cat-manage-item ${isDefault?'default-cat':''}" data-cat="${escapeHtml(cat)}">
+      <span class="cat-name">${escapeHtml(cat)}</span>
+      <span class="cat-count">(${count})</span>
+      <div class="cat-actions">
+        <button class="cat-btn" data-act="up" data-idx="${idx}" ${isFirst?'disabled style="opacity:0.3"':''} title="上移">↑</button>
+        <button class="cat-btn" data-act="down" data-idx="${idx}" ${isLast?'disabled style="opacity:0.3"':''} title="下移">↓</button>
+        <button class="cat-btn btn-default" data-act="default" data-cat="${escapeHtml(cat)}" title="设为默认">${isDefault?'★':'☆'}</button>
+        ${cat!=='全部'?`<button class="cat-btn" data-act="rename" data-cat="${escapeHtml(cat)}" title="改名">✏️</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.onclick = () => {
+      const act = btn.dataset.act;
+      if (act === 'up' || act === 'down') {
+        const idx = parseInt(btn.dataset.idx);
+        const newIdx = act === 'up' ? idx - 1 : idx + 1;
+        const temp = state.catOrder[idx] || cats[idx];
+        const other = state.catOrder[newIdx] || cats[newIdx];
+        // 重建顺序数组
+        const fullOrder = cats.map(c => state.catOrder.includes(c) ? c : c);
+        // 确保所有分类都在顺序中
+        const orderArr = [...cats];
+        // 应用已有自定义顺序
+        const merged = [];
+        for (const c of state.catOrder) { if (orderArr.includes(c)) merged.push(c); }
+        for (const c of orderArr) { if (!merged.includes(c)) merged.push(c); }
+        // 交换
+        [merged[idx], merged[newIdx]] = [merged[newIdx], merged[idx]];
+        state.catOrder = merged;
+        localStorage.setItem('nav_cat_order', JSON.stringify(state.catOrder));
+        renderCatManageList();
+        renderTabs();
+      } else if (act === 'default') {
+        state.defaultCategory = btn.dataset.cat;
+        localStorage.setItem('nav_default_cat', state.defaultCategory);
+        renderCatManageList();
+        renderTabs();
+        showToast(`⭐ 默认分组已设为「${state.defaultCategory}」`);
+      } else if (act === 'rename') {
+        const oldName = btn.dataset.cat;
+        const newName = prompt('请输入新的分组名称：', oldName);
+        if (newName && newName.trim() && newName.trim() !== oldName) {
+          const trimmed = newName.trim();
+          // 更新所有数据的分类
+          state.allData = state.allData.map(d => {
+            if ((d.category || '未分类') === oldName) return { ...d, category: trimmed };
+            return d;
+          });
+          saveLocalData(state.allData);
+          // 更新顺序数组
+          state.catOrder = state.catOrder.map(c => c === oldName ? trimmed : c);
+          localStorage.setItem('nav_cat_order', JSON.stringify(state.catOrder));
+          // 更新默认分类
+          if (state.defaultCategory === oldName) {
+            state.defaultCategory = trimmed;
+            localStorage.setItem('nav_default_cat', trimmed);
+          }
+          // 同步到云端
+          if (state.isOnline) {
+            getClient().from('nav_links').update({ category: trimmed }).eq('category', oldName)
+              .then(() => showToast(`✅ 「${oldName}」已改名为「${trimmed}」`))
+              .catch(err => handleDbError(err, '改名'));
+          } else {
+            showToast(`✅ 「${oldName}」已改名为「${trimmed}」`);
+          }
+          renderCatManageList();
+          renderAll();
+        }
+      }
+    };
+  });
+}
+
 // ==================== 分类下拉 ====================
 function buildCategorySelect(selectEl, customGroupEl, customInputEl, selectedCat) {
-  const cats = [...new Set(state.allData.map(d=>d.category||'未分类'))].sort();
+  const cats = getOrderedCategories().filter(c => c !== '全部');
   selectEl.innerHTML = '<option value="__custom__">✏️ 新建分类...</option>' +
     cats.map(c=>`<option value="${escapeHtml(c)}" ${c===selectedCat?'selected':''}>${escapeHtml(c)}</option>`).join('');
   const toggleCustom = () => {
@@ -565,7 +696,7 @@ ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
   el.onclick = () => { const action=el.dataset.action, item=state.ctxItem; hideCtxMenu(); if(!item)return; if(action==='edit')openEditModal(item); else if(action==='delete')deleteLink(item.id,item.name); else if(action==='move')openMoveModal(item); };
 });
 
-// ==================== 📱 移动端左滑动（非排序模式） ====================
+// ==================== 📱 移动端左滑动 ====================
 let swipeActiveWrapper = null;
 let swipeStartX = 0, swipeStartY = 0, swipeCurrentX = 0, isSwiping = false, swipeDirectionLocked = false;
 
@@ -639,14 +770,13 @@ function resetSwipe(wrapper) {
 }
 function resetAllSwipes() { document.querySelectorAll('.swipe-wrapper.swiped').forEach(w => resetSwipe(w)); }
 
-// ==================== ⭐ 统一拖拽排序系统（幽灵跟随） ====================
+// ==================== ⭐ 统一拖拽排序（支持首尾边界） ====================
 let drag = {
   active: false, sourceWrapper: null, ghost: null, placeholder: null,
   sourceId: null, offsetX: 0, offsetY: 0, lastOverId: null
 };
 
 function initDragListeners() {
-  // PC鼠标
   contentEl.addEventListener('mousedown', e => {
     if (!state.sortMode) return;
     const wrapper = e.target.closest('.swipe-wrapper');
@@ -662,7 +792,6 @@ function initDragListeners() {
   document.addEventListener('mouseup', () => { if (drag.active) endDrag(); });
   document.addEventListener('mouseleave', () => { if (drag.active) endDrag(); });
 
-  // 移动端触摸
   contentEl.addEventListener('touchstart', e => {
     if (!state.sortMode) return;
     const wrapper = e.target.closest('.swipe-wrapper');
@@ -686,7 +815,6 @@ function startDrag(wrapper, clientX, clientY, isTouch) {
   drag.offsetX = clientX - rect.left;
   drag.offsetY = clientY - rect.top;
 
-  // 幽灵元素
   const ghost = wrapper.cloneNode(true);
   ghost.className = 'drag-ghost';
   ghost.style.width = rect.width + 'px';
@@ -700,7 +828,6 @@ function startDrag(wrapper, clientX, clientY, isTouch) {
 
   wrapper.classList.add('dragging-source');
 
-  // 占位符
   const ph = document.createElement('div');
   ph.className = 'drag-placeholder';
   ph.style.height = rect.height + 'px';
@@ -716,17 +843,36 @@ function moveDrag(clientX, clientY) {
   drag.ghost.style.left = (clientX - drag.offsetX) + 'px';
   drag.ghost.style.top = (clientY - drag.offsetY) + 'px';
 
-  const wrappers = Array.from(contentEl.querySelectorAll('.swipe-wrapper:not(.dragging-source)'));
+  const container = contentEl.querySelector('.view-list, .view-grid');
+  if (!container) return;
+  const wrappers = Array.from(container.querySelectorAll('.swipe-wrapper:not(.dragging-source)'));
+  
+  // 【修改1】支持排到第一个或最后一个
+  let inserted = false;
   for (const w of wrappers) {
     const rect = w.getBoundingClientRect();
     if (clientY >= rect.top && clientY <= rect.bottom) {
       if (drag.lastOverId !== w.dataset.id) {
         drag.lastOverId = w.dataset.id;
         const midY = rect.top + rect.height / 2;
-        if (clientY < midY) w.parentNode.insertBefore(drag.placeholder, w);
-        else w.parentNode.insertBefore(drag.placeholder, w.nextSibling);
+        if (clientY < midY) container.insertBefore(drag.placeholder, w);
+        else container.insertBefore(drag.placeholder, w.nextSibling);
       }
+      inserted = true;
       break;
+    }
+  }
+  
+  // 超出所有卡片范围时：在顶部以上 → 插到最前；在底部以下 → 插到最后
+  if (!inserted && wrappers.length > 0) {
+    const firstRect = wrappers[0].getBoundingClientRect();
+    const lastRect = wrappers[wrappers.length - 1].getBoundingClientRect();
+    if (clientY < firstRect.top) {
+      container.insertBefore(drag.placeholder, wrappers[0]);
+      drag.lastOverId = '__first__';
+    } else if (clientY > lastRect.bottom) {
+      container.insertBefore(drag.placeholder, null); // appendChild
+      drag.lastOverId = '__last__';
     }
   }
 }
@@ -737,7 +883,6 @@ async function endDrag() {
   const ghost = drag.ghost;
   const placeholder = drag.placeholder;
 
-  // 飞回动画
   if (ghost && placeholder) {
     const phRect = placeholder.getBoundingClientRect();
     ghost.style.transition = 'all 0.2s ease';
@@ -755,10 +900,10 @@ async function endDrag() {
   wrapper.style.display = '';
   wrapper.classList.remove('dragging-source');
 
-  const newOrder = Array.from(contentEl.querySelectorAll('.swipe-wrapper')).map(w => w.dataset.id);
+  const container = contentEl.querySelector('.view-list, .view-grid');
+  const newOrder = container ? Array.from(container.querySelectorAll('.swipe-wrapper')).map(w => w.dataset.id) : [];
   drag = { active: false, sourceWrapper: null, ghost: null, placeholder: null, sourceId: null, offsetX: 0, offsetY: 0, lastOverId: null };
 
-  // 更新数据顺序
   const orderedData = [];
   for (const id of newOrder) {
     const item = state.allData.find(d => String(d.id) === String(id));
@@ -768,7 +913,6 @@ async function endDrag() {
   state.allData = orderedData;
   saveLocalData(state.allData);
 
-  // 后台同步
   if (state.isOnline) {
     try {
       const client = getClient();
@@ -841,11 +985,9 @@ async function batchInsert(items) {
   const local=getLocalData();valid.forEach(i=>{i.id=i.id||('local_'+Date.now()+'_'+Math.random().toString(36).slice(2,6));local.push(i)});saveLocalData(local);return valid.length;
 }
 
-// 同步
 $('btnUploadToCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ 请先切在线模式');return}const local=getLocalData();if(!local.length){showToast('⚠️ 本地无数据');return}if(!confirm(`上传${local.length}条到云端？`))return;try{const items=local.map(i=>({name:i.name,url:i.url,category:i.category||'未分类',description:i.description||'',is_active:true}));const{error}=await getClient().from('nav_links').insert(items);if(error)throw error;showToast(`✅ 已上传${items.length}条`);loadData(true);updateSyncInfo()}catch(err){handleDbError(err,'上传')}};
 $('btnDownloadFromCloud').onclick=async()=>{if(!state.isOnline){showToast('❌ 请先切在线模式');return}if(!confirm('从云端覆盖本地？'))return;try{const{data,error}=await getClient().from('nav_links').select('id,name,url,category,description').eq('is_active',true).order('sort_order',{ascending:true});if(error)throw error;saveLocalData(data||[]);state.allData=data||[];renderAll();updateSyncInfo();showToast(`✅ 已拉取${(data||[]).length}条`)}catch(err){handleDbError(err,'拉取')}};
 
-// 转换
 $('btnJsonToExcel').onclick=()=>$('fileInputConvertJson').click();
 $('fileInputConvertJson').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(typeof XLSX==='undefined'){showToast('❌ Excel库未就绪');return}try{const items=JSON.parse(await f.text());const ws=XLSX.utils.json_to_sheet(items);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');XLSX.writeFile(wb,f.name.replace('.json','.xlsx'));showToast('✅ 转换成功')}catch(err){showToast('❌ '+err.message)}e.target.value=''};
 $('btnExcelToJson').onclick=()=>$('fileInputConvertExcel').click();
@@ -857,13 +999,14 @@ function renderAll() {
     showState(state.mode==='offline'?'💾':'📭','暂无数据','点击 + 添加第一条导航');
     tabsEl.innerHTML=''; return;
   }
-  const catSet=new Set(state.allData.map(d=>d.category||'未分类'));
-  state.categories=['全部',...Array.from(catSet).sort()];
-  if(!state.categories.includes(state.currentCategory))state.currentCategory='全部';
+  state.categories = getOrderedCategories();
+  if(!state.categories.includes(state.currentCategory)) state.currentCategory = state.defaultCategory;
+  if(!state.categories.includes(state.currentCategory)) state.currentCategory = '全部';
   renderTabs(); renderContent();
 }
 
 function renderTabs() {
+  state.categories = getOrderedCategories();
   tabsEl.innerHTML = state.categories.map(cat => {
     const count = cat === '全部' ? state.allData.length : state.allData.filter(d => (d.category||'未分类') === cat).length;
     return `<button class="tab ${cat===state.currentCategory?'active':''}" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}<span class="count">(${count})</span></button>`;
