@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" async></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" async></script>
     <style>
-        /* ===== 完整样式 ===== */
+        /* ===== 完整样式（与之前一致，略作精简） ===== */
         :root {
             --bg: #f5f7fa;
             --bg-card: #ffffff;
@@ -265,7 +265,6 @@
         .multi-select-toolbar .actions button:hover { transform: scale(1.05); filter: brightness(0.9); }
 
         .dragging-source { opacity: 0.3; pointer-events: none; }
-        /* 排序拖拽线 - 修改为细线 */
         .drag-placeholder {
             height: 2px;
             min-height: 0;
@@ -285,17 +284,12 @@
 
         .drag-ghost { position: fixed; z-index: 9999; pointer-events: none; opacity: 0.92; transform: scale(1.03) rotate(1.5deg); box-shadow: 0 15px 40px rgba(0,0,0,0.25); border-radius: var(--radius); background: var(--bg-card); border: 1px solid var(--primary); }
 
+        /* 移除左滑相关样式，保留 swiped 以防万一 */
         .swipe-wrapper { position: relative; overflow: hidden; border-radius: var(--radius); }
         .swipe-wrapper .card { position: relative; z-index: 2; transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94); will-change: transform; }
-        .swipe-wrapper.swiped .card { transform: translateX(calc(-1 * var(--swipe-distance))); }
-        .swipe-wrapper.touch-dragging .card { transition: none; }
-        .swipe-actions { position: absolute; right: 0; top: 0; bottom: 0; z-index: 1; display: flex; align-items: stretch; width: var(--swipe-distance); }
-        .swipe-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: none; color: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: filter 0.15s; }
-        .swipe-btn:active { filter: brightness(0.85); }
-        .swipe-btn .swipe-icon { font-size: 20px; }
-        .swipe-btn-edit { background: var(--primary); }
-        .swipe-btn-move { background: var(--warning); }
-        .swipe-btn-delete { background: var(--danger); }
+        /* 不再使用 swiped 类，但保留以防其他样式影响 */
+        .swipe-wrapper .card { transform: none !important; }
+        .swipe-actions { display: none !important; }
 
         .card {
             display: flex; flex-direction: column; gap: calc(var(--card-pad) * 0.6);
@@ -307,7 +301,6 @@
         .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), #ec4899); opacity: 0; transition: opacity 0.3s; }
         .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--primary); }
         .card:hover::before { opacity: 1; }
-        .swipe-wrapper.swiped .card:hover { transform: translateX(calc(-1 * var(--swipe-distance))); }
         .card-icon { width: var(--icon-size); height: var(--icon-size); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: calc(var(--icon-size) * 0.5); font-weight: 700; flex-shrink: 0; }
         .card-info { min-width: 0; flex: 1; }
         .card-name { font-size: var(--font-name); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -597,7 +590,6 @@
             .choice-grid { grid-template-columns: 1fr; }
             .card:hover { transform: none; box-shadow: var(--shadow); border-color: var(--border); }
             .card:hover::before { opacity: 0; }
-            .swipe-wrapper.swiped .card:hover { transform: translateX(calc(-1 * var(--swipe-distance))); }
             .sort-banner { top: calc(var(--header-height) + 4px); font-size: 13px; padding: 8px 14px; flex-wrap: wrap; gap: 8px; }
             .sort-quick-actions button { font-size: 12px; padding: 2px 6px; }
             .multi-select-toolbar { bottom: 80px; padding: 10px 16px; flex-wrap: wrap; justify-content: center; gap: 10px; }
@@ -835,7 +827,7 @@
             mode: localStorage.getItem('nav_mode') || 'online',
             density: parseInt(localStorage.getItem('nav_density') ?? '0'),
             ctxItem: null,
-            ctxCategoryPath: null, // 右键点击的分类路径
+            ctxCategoryPath: null,
             cloudCount: 0,
             sortMode: localStorage.getItem('nav_sortMode') === 'true',
             multiSelectMode: localStorage.getItem('nav_multiSelectMode') === 'true',
@@ -1174,9 +1166,7 @@
                     const path = this.dataset.path;
                     if (path && path !== '全部') {
                         state.ctxCategoryPath = path;
-                        // 显示右键菜单
                         const menu = $('ctxMenu');
-                        // 隐藏其他条目，只显示“设为默认分组”
                         menu.querySelectorAll('.ctx-item').forEach(item => {
                             if (item.dataset.action === 'setDefaultCategory') {
                                 item.style.display = 'flex';
@@ -1211,7 +1201,7 @@
             });
         }
 
-        // ==================== 设置中的分组管理（所有节点都支持设为默认） ====================
+        // ==================== 设置中的分组管理 ====================
         function renderCategoryManage() {
             const container = $('categoryManage');
             const paths = getCategoryPaths();
@@ -1242,7 +1232,6 @@
                     const count = countNodeLinks(fullPath);
                     const isDefault = (state.defaultCategory === fullPath);
                     const folderIcon = hasChildren ? '📂' : '📄';
-                    // 所有节点都添加 default-radio
                     html += `<li>
                         <div class="cat-item" data-path="${escapeHtml(fullPath)}">
                             ${hasChildren ? `<button class="cat-toggle" data-path="${escapeHtml(fullPath)}" title="折叠/展开">▼</button>` : `<span style="width:22px;"></span>`}
@@ -1302,7 +1291,6 @@
                 if (li) {
                     const path = catName.closest('.cat-item')?.dataset.path;
                     if (path) {
-                        // 勾选对应的 radio
                         const radioInLi = li.querySelector('.default-radio');
                         if (radioInLi) {
                             radioInLi.checked = true;
@@ -1345,20 +1333,6 @@
                 if (moveLast) { const id = moveLast.dataset.id; if (id) moveItemTo(id, 'last');
                     e.preventDefault(); return; }
             }
-
-            // 滑动按钮
-            const swipeBtn = e.target.closest('.swipe-btn');
-            if (swipeBtn && !state.sortMode && !state.multiSelectMode) {
-                const action = swipeBtn.dataset.action;
-                const id = swipeBtn.dataset.id;
-                const item = state.allData.find(i => String(i.id) === String(id));
-                if (!item) return;
-                resetAllSwipes();
-                if (action === 'edit') openEditModal(item);
-                else if (action === 'move') openMoveModal(item);
-                else if (action === 'delete') deleteLink(item.id, item.name);
-                e.preventDefault();
-            }
         });
 
         // 右键菜单的全局事件处理（包括“设为默认分组”）
@@ -1381,7 +1355,6 @@
         function hideCtxMenu() {
             const menu = $('ctxMenu');
             menu.classList.remove('show');
-            // 恢复所有菜单项显示
             menu.querySelectorAll('.ctx-item').forEach(item => {
                 item.style.display = 'flex';
             });
@@ -1491,7 +1464,6 @@
         const ctxMenu = $('ctxMenu');
         function showCtxMenu(x, y, item) {
             state.ctxItem = item;
-            // 恢复所有菜单项显示
             ctxMenu.querySelectorAll('.ctx-item').forEach(el => el.style.display = 'flex');
             ctxMenu.classList.add('show');
             const mw = ctxMenu.offsetWidth,
@@ -1501,7 +1473,8 @@
             ctxMenu.style.left = Math.min(x, ww - mw - 10) + 'px';
             ctxMenu.style.top = Math.min(y, wh - mh - 10) + 'px';
         }
-        // 卡片右键（非模式）
+
+        // 桌面端卡片右键
         document.addEventListener('contextmenu', e => {
             if (state.sortMode || state.multiSelectMode) { e.preventDefault(); return; }
             const card = e.target.closest('.card');
@@ -1509,7 +1482,6 @@
                 e.preventDefault();
                 const item = state.allData.find(i => String(i.id) === String(card.dataset.id));
                 if (item) {
-                    // 只显示卡片相关菜单，不显示“设为默认分组”
                     ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
                         if (el.dataset.action === 'setDefaultCategory') {
                             el.style.display = 'none';
@@ -1569,92 +1541,67 @@
             };
         });
 
-        // ==================== 滑动操作 ====================
-        let swipeActiveWrapper = null,
-            swipeStartX = 0,
-            swipeStartY = 0,
-            swipeCurrentX = 0,
-            isSwiping = false,
-            swipeDirectionLocked = false;
+        // ==================== 移动端长按菜单（替代左滑） ====================
+        let longPressTimer = null;
+        let longPressTriggered = false;
 
-        function initSwipeListeners() {
-            contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-            contentEl.addEventListener('touchmove', handleTouchMove, { passive: false });
-            contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
-            document.addEventListener('touchstart', e => {
-                if (swipeActiveWrapper && !swipeActiveWrapper.contains(e.target)) resetSwipe(swipeActiveWrapper);
+        function setupLongPress() {
+            contentEl.addEventListener('touchstart', function(e) {
+                if (state.sortMode || state.multiSelectMode) return;
+                const card = e.target.closest('.card');
+                if (!card) return;
+                // 获取对应的 item
+                const id = card.dataset.id;
+                const item = state.allData.find(i => String(i.id) === String(id));
+                if (!item) return;
+
+                longPressTriggered = false;
+                longPressTimer = setTimeout(() => {
+                    longPressTriggered = true;
+                    // 获取触摸位置
+                    const touch = e.touches[0];
+                    // 显示菜单
+                    ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
+                        if (el.dataset.action === 'setDefaultCategory') {
+                            el.style.display = 'none';
+                        } else {
+                            el.style.display = 'flex';
+                        }
+                    });
+                    showCtxMenu(touch.clientX, touch.clientY, item);
+                    // 阻止后续事件
+                    e.preventDefault();
+                }, 500);
+            }, { passive: true });
+
+            contentEl.addEventListener('touchmove', function(e) {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            }, { passive: true });
+
+            contentEl.addEventListener('touchend', function(e) {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                // 如果长按已触发，阻止点击事件
+                if (longPressTriggered) {
+                    e.preventDefault();
+                }
+                longPressTriggered = false;
+            }, { passive: true });
+
+            // 点击其他区域关闭菜单
+            document.addEventListener('touchstart', function(e) {
+                if (!e.target.closest('.ctx-menu') && !e.target.closest('.card')) {
+                    hideCtxMenu();
+                }
             }, { passive: true });
         }
 
-        function handleTouchStart(e) {
-            if (state.sortMode || state.multiSelectMode) return;
-            const wrapper = e.target.closest('.swipe-wrapper');
-            if (!wrapper) return;
-            if (swipeActiveWrapper && swipeActiveWrapper !== wrapper) resetSwipe(swipeActiveWrapper);
-            swipeStartX = e.touches[0].clientX;
-            swipeStartY = e.touches[0].clientY;
-            swipeCurrentX = swipeStartX;
-            isSwiping = false;
-            swipeDirectionLocked = false;
-        }
-
-        function handleTouchMove(e) {
-            if (state.sortMode || state.multiSelectMode) return;
-            const wrapper = e.target.closest('.swipe-wrapper');
-            if (!wrapper) return;
-            const dx = e.touches[0].clientX - swipeStartX;
-            const dy = e.touches[0].clientY - swipeStartY;
-            if (!swipeDirectionLocked) {
-                if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-                swipeDirectionLocked = true;
-                if (Math.abs(dy) > Math.abs(dx)) { isSwiping = false; return; }
-                isSwiping = true;
-            }
-            if (!isSwiping) return;
-            e.preventDefault();
-            swipeCurrentX = e.touches[0].clientX;
-            const maxSwipe = 180;
-            const moveX = Math.min(0, Math.max(-maxSwipe, swipeCurrentX - swipeStartX));
-            if (wrapper.classList.contains('swiped')) {
-                wrapper.querySelector('.card').style.transform =
-                    `translateX(${Math.min(0, Math.max(-maxSwipe, -maxSwipe + (swipeCurrentX - swipeStartX)))}px)`;
-            } else {
-                wrapper.classList.add('touch-dragging');
-                wrapper.querySelector('.card').style.transform = `translateX(${moveX}px)`;
-            }
-        }
-
-        function handleTouchEnd(e) {
-            if (state.sortMode || state.multiSelectMode) return;
-            const wrapper = e.target.closest('.swipe-wrapper');
-            if (!wrapper || !isSwiping) { isSwiping = false;
-                swipeDirectionLocked = false; return; }
-            wrapper.classList.remove('touch-dragging');
-            const card = wrapper.querySelector('.card');
-            const dx = swipeCurrentX - swipeStartX;
-            if (wrapper.classList.contains('swiped')) {
-                if (dx > 50) resetSwipe(wrapper);
-                else card.style.transform = '';
-            } else {
-                if (dx < -50) { wrapper.classList.add('swiped');
-                    card.style.transform = '';
-                    swipeActiveWrapper = wrapper; } else card.style.transform = '';
-            }
-            isSwiping = false;
-            swipeDirectionLocked = false;
-        }
-
-        function resetSwipe(wrapper) {
-            if (!wrapper) return;
-            wrapper.classList.remove('swiped', 'touch-dragging');
-            const card = wrapper.querySelector('.card');
-            if (card) card.style.transform = '';
-            if (swipeActiveWrapper === wrapper) swipeActiveWrapper = null;
-        }
-
-        function resetAllSwipes() { document.querySelectorAll('.swipe-wrapper.swiped').forEach(w => resetSwipe(w)); }
-
-        // ==================== 拖拽排序（细线占位） ====================
+        // ==================== 拖拽排序 ====================
         let drag = {
             active: false,
             sourceWrapper: null,
@@ -1719,7 +1666,6 @@
             document.body.appendChild(ghost);
             drag.ghost = ghost;
             wrapper.classList.add('dragging-source');
-            // 创建细线占位符
             const ph = document.createElement('div');
             ph.className = 'drag-placeholder';
             ph.style.height = '2px';
@@ -2190,6 +2136,11 @@
         $('multiDeleteBtn').onclick = function() { if (!state.selectedIds.length) return;
             batchDelete(); };
 
+        // ==================== 重置滑动（清空残留状态） ====================
+        function resetAllSwipes() {
+            // 无需处理，因为已移除左滑
+        }
+
         // ==================== 渲染引擎 ====================
         function renderAll() {
             const catSet = new Set(state.allData.map(d => d.category || '未分类'));
@@ -2347,11 +2298,7 @@
                         <div class="card-icon" style="background:linear-gradient(135deg,${c[0]},${c[1]})">${initial}</div>
                         <div class="card-info"><div class="card-name">${name}</div>${desc?`<div class="card-desc">${desc}</div>`:''}</div>
                     </a>
-                    <div class="swipe-actions">
-                        <button class="swipe-btn swipe-btn-edit" data-action="edit" data-id="${item.id}"><span class="swipe-icon">✏️</span>编辑</button>
-                        <button class="swipe-btn swipe-btn-move" data-action="move" data-id="${item.id}"><span class="swipe-icon">📂</span>移动</button>
-                        <button class="swipe-btn swipe-btn-delete" data-action="delete" data-id="${item.id}"><span class="swipe-icon">🗑️</span>删除</button>
-                    </div>
+                    <!-- 移除了滑动操作按钮 -->
                 </div>`;
             }
         }
@@ -2504,7 +2451,10 @@
             updateModeUI();
             refreshConfigDisplay();
 
-            initSwipeListeners();
+            // 初始化长按监听（移动端）
+            setupLongPress();
+
+            // 拖拽排序（桌面+移动）
             initDragListeners();
 
             const savedDefault = localStorage.getItem('nav_defaultCategory');
