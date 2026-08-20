@@ -446,8 +446,8 @@
         .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
 
-        /* 分组排序弹窗中的样式（支持拖拽） */
-        #groupSortList {
+        /* ===== 分组排序弹窗树形样式 ===== */
+        .sort-tree-container {
             max-height: 400px;
             overflow-y: auto;
             margin: 12px 0;
@@ -456,44 +456,68 @@
             padding: 8px;
             background: var(--bg);
             min-height: 60px;
+            -webkit-overflow-scrolling: touch;
         }
-        .sort-item {
+        .sort-tree-node {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid var(--border);
+        }
+        .sort-tree-node:last-child { border-bottom: none; }
+        .sort-tree-node .node-row {
             display: flex;
             align-items: center;
-            padding: 6px 8px;
-            border-bottom: 1px solid var(--border);
-            gap: 8px;
-            cursor: grab;
+            padding: 6px 4px;
+            gap: 6px;
+            cursor: default;
             transition: background 0.15s;
-            user-select: none;
+            border-radius: 4px;
+            flex-wrap: wrap;
         }
-        .sort-item:last-child { border-bottom: none; }
-        .sort-item:hover { background: var(--bg-card); }
-        .sort-item:active { cursor: grabbing; }
-        .sort-item .drag-handle-sort {
+        .sort-tree-node .node-row:hover { background: var(--bg-card); }
+        .sort-tree-node .node-row .toggle-btn {
+            width: 22px;
+            height: 22px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .sort-tree-node .node-row .toggle-btn:hover { background: var(--border); }
+        .sort-tree-node .node-row .drag-handle-sort {
             font-size: 18px;
             color: var(--text-secondary);
             opacity: 0.5;
             cursor: grab;
             padding: 0 4px;
+            flex-shrink: 0;
         }
-        .sort-item .drag-handle-sort:active { cursor: grabbing; }
-        .sort-item .item-name {
+        .sort-tree-node .node-row .drag-handle-sort:active { cursor: grabbing; }
+        .sort-tree-node .node-row .item-name {
             flex: 1;
             font-size: 14px;
             word-break: break-word;
+            min-width: 60px;
         }
-        .sort-item .level-select {
-            width: 80px;
-            padding: 4px 6px;
+        .sort-tree-node .node-row .level-select {
+            width: 70px;
+            padding: 3px 4px;
             border-radius: 6px;
             border: 1px solid var(--border);
             background: var(--bg-card);
             color: var(--text);
             font-size: 13px;
             cursor: pointer;
+            flex-shrink: 0;
         }
-        .sort-item .arrow-btn {
+        .sort-tree-node .node-row .arrow-btn {
             background: none;
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -503,19 +527,67 @@
             line-height: 1.4;
             color: var(--text-secondary);
             transition: all 0.2s;
+            flex-shrink: 0;
         }
-        .sort-item .arrow-btn:hover {
+        .sort-tree-node .node-row .arrow-btn:hover {
             background: var(--primary);
             color: #fff;
             border-color: var(--primary);
         }
-        /* 拖拽占位 */
+        .sort-tree-node .children-wrap {
+            padding-left: 28px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .sort-tree-node .children-wrap.collapsed {
+            max-height: 0 !important;
+        }
+        .sort-tree-node .children-wrap.expanded {
+            max-height: 9999px;
+        }
+        .sort-tree-node .node-row .node-level-badge {
+            font-size: 11px;
+            padding: 1px 8px;
+            border-radius: 10px;
+            background: var(--border);
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
         .sort-drag-placeholder {
             border: 2px dashed var(--primary);
             border-radius: 6px;
             background: rgba(99,102,241,0.08);
             margin: 2px 0;
             height: 40px;
+        }
+
+        .sort-filter-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .sort-filter-bar .filter-btn {
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .sort-filter-bar .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .sort-filter-bar .filter-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .sort-filter-bar .filter-btn .badge {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-left: 3px;
         }
 
         .mode-switch {
@@ -609,6 +681,11 @@
             .sort-quick-actions button { font-size: 12px; padding: 2px 6px; }
             .multi-select-toolbar { bottom: 80px; padding: 10px 16px; flex-wrap: wrap; justify-content: center; gap: 10px; }
             .main-wrapper { touch-action: pan-y; }
+            .sort-filter-bar .filter-btn { font-size: 12px; padding: 3px 8px; }
+            .sort-tree-node .node-row { flex-wrap: wrap; gap: 4px; }
+            .sort-tree-node .node-row .level-select { width: 60px; font-size: 12px; }
+            .sort-tree-node .node-row .item-name { min-width: 40px; }
+            .modal { max-width: 100%; margin: 10px; padding: 20px; }
         }
     </style>
 </head>
@@ -751,15 +828,24 @@
         </div>
     </div>
 
-    <!-- 分组排序弹窗 -->
+    <!-- ===== 分组排序弹窗（修复版：树形+折叠+筛选） ===== -->
     <div class="modal-overlay" id="groupSortModal">
-        <div class="modal" style="max-width:620px;">
+        <div class="modal" style="max-width:680px;">
             <div class="modal-header">
                 <h2>📂 分组排序</h2>
                 <button class="close-btn" onclick="closeModal('groupSortModal')">&times;</button>
             </div>
-            <p class="subtitle">拖拽分组调整顺序，或使用上下箭头微调</p>
-            <div id="groupSortList"></div>
+            <p class="subtitle">拖拽分组调整顺序，点击文件夹折叠/展开，使用层级筛选快速定位。</p>
+            <!-- 筛选栏 -->
+            <div class="sort-filter-bar" id="sortFilterBar">
+                <button class="filter-btn active" data-filter="all">📋 全部 <span class="badge" id="filterCountAll">0</span></button>
+                <button class="filter-btn" data-filter="1">📁 一级 <span class="badge" id="filterCount1">0</span></button>
+                <button class="filter-btn" data-filter="2">📁 二级 <span class="badge" id="filterCount2">0</span></button>
+                <button class="filter-btn" data-filter="3">📁 三级 <span class="badge" id="filterCount3">0</span></button>
+                <button class="filter-btn" data-filter="4">📁 四级 <span class="badge" id="filterCount4">0</span></button>
+                <button class="filter-btn" data-filter="5">📁 五级 <span class="badge" id="filterCount5">0</span></button>
+            </div>
+            <div class="sort-tree-container" id="groupSortTree"></div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeModal('groupSortModal')">取消</button>
                 <button class="btn btn-primary" id="btnSaveGroupSort">💾 保存</button>
@@ -860,8 +946,11 @@
             selectedIds: [],
             sidebarOpen: localStorage.getItem('nav_sidebarOpen') === 'true' || window.innerWidth > 768,
             editMode: localStorage.getItem('nav_editMode') === 'true',
-            // 树形折叠状态：key为分类路径，true表示折叠（隐藏子级）
+            // 侧边栏树形折叠状态
             treeCollapsed: JSON.parse(localStorage.getItem('nav_tree_collapsed') || '{}'),
+            // 分组排序树形折叠状态（独立存储）
+            sortTreeExpand: JSON.parse(localStorage.getItem('nav_sort_tree_expand') || '{}'),
+            sortFilter: 'all', // 'all' | '1' | '2' | '3' | '4' | '5'
         };
         const $ = id => document.getElementById(id);
         const LOCAL_KEY = 'nav_local_data';
@@ -1280,8 +1369,600 @@
             }).length;
         }
 
-        // ==================== 分组排序弹窗（保留原有，未修改） ====================
-        // 此处省略，保持不变
+        // ==================== 分组排序弹窗（树形可折叠+层级筛选+拖拽） ====================
+        // 构建树形数据
+        function buildSortTreeData(paths) {
+            const tree = {};
+            paths.forEach(p => {
+                const parts = p.split('/').filter(s => s.trim());
+                let node = tree;
+                parts.forEach(part => {
+                    if (!node[part]) node[part] = {};
+                    node = node[part];
+                });
+            });
+            return tree;
+        }
+
+        function flattenSortTree(tree, parentPath, level, list) {
+            const keys = Object.keys(tree);
+            keys.forEach(key => {
+                const fullPath = parentPath ? parentPath + '/' + key : key;
+                const children = tree[key];
+                const hasChildren = Object.keys(children).length > 0;
+                list.push({
+                    name: key,
+                    path: fullPath,
+                    level: level,
+                    hasChildren: hasChildren,
+                    children: children
+                });
+                if (hasChildren) {
+                    flattenSortTree(children, fullPath, level + 1, list);
+                }
+            });
+            return list;
+        }
+
+        // 获取排序树数据
+        function getSortTreeItems() {
+            const paths = getCategoryPaths();
+            if (!paths.length) return [];
+            const tree = buildSortTreeData(paths);
+            const flat = [];
+            flattenSortTree(tree, '', 1, flat);
+            // 按 categoryOrder 排序
+            const ordered = state.categoryOrder || paths;
+            const orderMap = {};
+            ordered.forEach((p, idx) => { orderMap[p] = idx; });
+            flat.sort((a, b) => {
+                const idxA = orderMap[a.path] !== undefined ? orderMap[a.path] : 9999;
+                const idxB = orderMap[b.path] !== undefined ? orderMap[b.path] : 9999;
+                if (idxA !== idxB) return idxA - idxB;
+                return a.path.localeCompare(b.path);
+            });
+            return flat;
+        }
+
+        // 构建节点树（用于渲染）
+        function buildSortTreeNode(item, allItems) {
+            const children = allItems.filter(i => i.path.startsWith(item.path + '/') && i.level === item.level + 1);
+            const ordered = state.categoryOrder || [];
+            children.sort((a, b) => {
+                const idxA = ordered.indexOf(a.path);
+                const idxB = ordered.indexOf(b.path);
+                if (idxA === -1 && idxB === -1) return a.name.localeCompare(b.name);
+                if (idxA === -1) return 1;
+                if (idxB === -1) return -1;
+                return idxA - idxB;
+            });
+            return {
+                ...item,
+                children: children.map(c => buildSortTreeNode(c, allItems))
+            };
+        }
+
+        // 渲染树形排序
+        function renderSortTree() {
+            const container = $('groupSortTree');
+            const allItems = getSortTreeItems();
+            if (!allItems.length) {
+                container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);">暂无分组</div>';
+                return;
+            }
+
+            // 计算各层级数量
+            const levelCounts = { all: allItems.length };
+            for (let i = 1; i <= 5; i++) {
+                levelCounts[i] = allItems.filter(item => item.level === i).length;
+            }
+            for (let i = 1; i <= 5; i++) {
+                const el = document.getElementById('filterCount' + i);
+                if (el) el.textContent = levelCounts[i] || 0;
+            }
+            const allEl = document.getElementById('filterCountAll');
+            if (allEl) allEl.textContent = allItems.length;
+
+            // 筛选
+            let filtered = allItems;
+            if (state.sortFilter !== 'all') {
+                const targetLevel = parseInt(state.sortFilter);
+                filtered = allItems.filter(item => item.level === targetLevel);
+            }
+
+            // 构建树
+            let rootNodes = [];
+            if (state.sortFilter === 'all') {
+                const topItems = allItems.filter(item => item.level === 1);
+                const ordered = state.categoryOrder || [];
+                topItems.sort((a, b) => {
+                    const idxA = ordered.indexOf(a.path);
+                    const idxB = ordered.indexOf(b.path);
+                    if (idxA === -1 && idxB === -1) return a.name.localeCompare(b.name);
+                    if (idxA === -1) return 1;
+                    if (idxB === -1) return -1;
+                    return idxA - idxB;
+                });
+                rootNodes = topItems.map(item => buildSortTreeNode(item, allItems));
+            } else {
+                // 筛选模式：显示目标层级，但显示完整路径
+                const targetLevel = parseInt(state.sortFilter);
+                const targetItems = allItems.filter(item => item.level === targetLevel);
+                const pathMap = {};
+                allItems.forEach(item => { pathMap[item.path] = item; });
+
+                const rootMap = {};
+                targetItems.forEach(item => {
+                    const parts = item.path.split('/');
+                    let currentPath = '';
+                    let parentNode = null;
+                    let rootNode = null;
+                    for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i];
+                        const fullPath = currentPath ? currentPath + '/' + part : part;
+                        const nodeData = allItems.find(n => n.path === fullPath);
+                        if (!nodeData) break;
+                        const newNode = {
+                            ...nodeData,
+                            children: [],
+                            _isPathNode: true,
+                            _show: i === parts.length - 1
+                        };
+                        if (!parentNode) {
+                            rootNode = newNode;
+                            const key = fullPath;
+                            if (!rootMap[key]) {
+                                rootMap[key] = newNode;
+                            } else {
+                                rootNode = rootMap[key];
+                            }
+                        } else {
+                            let existing = parentNode.children.find(c => c.path === fullPath);
+                            if (!existing) {
+                                parentNode.children.push(newNode);
+                                existing = newNode;
+                            }
+                            parentNode = existing;
+                        }
+                        parentNode = newNode;
+                        currentPath = fullPath;
+                    }
+                });
+                // 排序根节点
+                const ordered = state.categoryOrder || [];
+                const sortedRoots = Object.values(rootMap).sort((a, b) => {
+                    const idxA = ordered.indexOf(a.path);
+                    const idxB = ordered.indexOf(b.path);
+                    if (idxA === -1 && idxB === -1) return a.name.localeCompare(b.name);
+                    if (idxA === -1) return 1;
+                    if (idxB === -1) return -1;
+                    return idxA - idxB;
+                });
+                rootNodes = sortedRoots;
+            }
+
+            // 渲染
+            const levelLabels = ['', '一级', '二级', '三级', '四级', '五级'];
+            const levelOptions = [1, 2, 3, 4, 5].map(l =>
+                `<option value="${l}">${levelLabels[l]}</option>`
+            ).join('');
+
+            function renderTreeNode(node, depth) {
+                const hasChildren = node.children && node.children.length > 0;
+                const path = node.path;
+                const isExpanded = state.sortTreeExpand[path] !== false; // 默认展开
+                const isLeaf = !hasChildren;
+                const indent = (node.level - 1) * 20;
+                const isFiltered = state.sortFilter !== 'all' && node.level === parseInt(state.sortFilter);
+
+                let html = `<div class="sort-tree-node" data-path="${escapeHtml(path)}" data-level="${node.level}">
+                    <div class="node-row" style="padding-left:${indent + 4}px;">
+                        ${hasChildren ? `<button class="toggle-btn" data-path="${escapeHtml(path)}">${isExpanded ? '▼' : '▶'}</button>` : `<span class="toggle-btn" style="visibility:hidden;">▼</span>`}
+                        <span class="drag-handle-sort">⠿</span>
+                        <span class="item-name">${isFiltered ? '📌 ' : '📂 '}${escapeHtml(node.name)}</span>
+                        <span class="node-level-badge">${levelLabels[node.level] || '未知'}</span>
+                        <select class="level-select" data-path="${escapeHtml(path)}">${levelOptions}</select>
+                        <button class="arrow-btn up-btn" data-path="${escapeHtml(path)}" title="上移">⬆</button>
+                        <button class="arrow-btn down-btn" data-path="${escapeHtml(path)}" title="下移">⬇</button>
+                    </div>
+                    ${hasChildren ? `<div class="children-wrap ${isExpanded ? 'expanded' : 'collapsed'}" data-parent="${escapeHtml(path)}">${node.children.map(c => renderTreeNode(c, depth + 1)).join('')}</div>` : ''}
+                </div>`;
+                return html;
+            }
+
+            container.innerHTML = rootNodes.map(n => renderTreeNode(n, 1)).join('');
+
+            // 为每个select设置当前值
+            container.querySelectorAll('.level-select').forEach(select => {
+                const path = select.dataset.path;
+                const item = allItems.find(i => i.path === path);
+                if (item) {
+                    select.value = Math.min(item.level, 5);
+                }
+            });
+
+            // 绑定事件
+            // 折叠按钮
+            container.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const path = this.dataset.path;
+                    const parent = this.closest('.sort-tree-node');
+                    const wrap = parent ? parent.querySelector('.children-wrap') : null;
+                    if (wrap) {
+                        const isExpanded = wrap.classList.contains('expanded');
+                        if (isExpanded) {
+                            wrap.classList.remove('expanded');
+                            wrap.classList.add('collapsed');
+                            this.textContent = '▶';
+                            state.sortTreeExpand[path] = false;
+                        } else {
+                            wrap.classList.remove('collapsed');
+                            wrap.classList.add('expanded');
+                            this.textContent = '▼';
+                            state.sortTreeExpand[path] = true;
+                        }
+                        localStorage.setItem('nav_sort_tree_expand', JSON.stringify(state.sortTreeExpand));
+                    }
+                });
+            });
+
+            // 箭头按钮
+            container.querySelectorAll('.up-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const path = this.dataset.path;
+                    moveSortItem(path, -1);
+                });
+            });
+            container.querySelectorAll('.down-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const path = this.dataset.path;
+                    moveSortItem(path, 1);
+                });
+            });
+
+            // 层级选择
+            container.querySelectorAll('.level-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const path = this.dataset.path;
+                    const newLevel = parseInt(this.value);
+                    changeSortItemLevel(path, newLevel);
+                });
+            });
+
+            // 拖拽初始化
+            initSortTreeDrag();
+        }
+
+        // 拖拽排序（树形）
+        let sortTreeDrag = {
+            active: false,
+            sourceEl: null,
+            placeholder: null,
+            ghost: null,
+            offsetY: 0,
+            container: null,
+            sourcePath: null,
+        };
+
+        function initSortTreeDrag() {
+            const container = $('groupSortTree');
+            if (!container) return;
+
+            // 移除旧监听避免重复绑定
+            const oldMouse = container._dragMouseHandler;
+            const oldTouch = container._dragTouchHandler;
+            if (oldMouse) container.removeEventListener('mousedown', oldMouse);
+            if (oldTouch) container.removeEventListener('touchstart', oldTouch);
+
+            const mouseHandler = function(e) {
+                const handle = e.target.closest('.drag-handle-sort');
+                if (!handle) return;
+                const row = handle.closest('.node-row');
+                if (!row) return;
+                const node = row.closest('.sort-tree-node');
+                if (!node) return;
+                e.preventDefault();
+                startSortTreeDrag(node, e.clientY);
+            };
+            const touchHandler = function(e) {
+                const handle = e.target.closest('.drag-handle-sort');
+                if (!handle) return;
+                const row = handle.closest('.node-row');
+                if (!row) return;
+                const node = row.closest('.sort-tree-node');
+                if (!node) return;
+                const touch = e.touches[0];
+                startSortTreeDrag(node, touch.clientY);
+            };
+
+            container._dragMouseHandler = mouseHandler;
+            container._dragTouchHandler = touchHandler;
+            container.addEventListener('mousedown', mouseHandler);
+            container.addEventListener('touchstart', touchHandler, { passive: true });
+        }
+
+        function startSortTreeDrag(node, clientY) {
+            const rect = node.getBoundingClientRect();
+            sortTreeDrag.active = true;
+            sortTreeDrag.sourceEl = node;
+            sortTreeDrag.sourcePath = node.dataset.path;
+            sortTreeDrag.offsetY = clientY - rect.top;
+            sortTreeDrag.container = node.parentElement;
+
+            // 幽灵
+            const ghost = node.cloneNode(true);
+            ghost.style.position = 'fixed';
+            ghost.style.width = rect.width + 'px';
+            ghost.style.height = rect.height + 'px';
+            ghost.style.left = rect.left + 'px';
+            ghost.style.top = rect.top + 'px';
+            ghost.style.zIndex = '9999';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.opacity = '0.85';
+            ghost.style.transform = 'scale(1.02)';
+            ghost.style.boxShadow = '0 8px 30px rgba(0,0,0,0.2)';
+            ghost.style.borderRadius = '8px';
+            ghost.style.background = 'var(--bg-card)';
+            ghost.style.border = '1px solid var(--primary)';
+            const handle = ghost.querySelector('.drag-handle-sort');
+            if (handle) handle.style.display = 'none';
+            document.body.appendChild(ghost);
+            sortTreeDrag.ghost = ghost;
+
+            // 占位
+            const ph = document.createElement('div');
+            ph.className = 'sort-drag-placeholder';
+            ph.style.height = rect.height + 'px';
+            ph.style.margin = '2px 0';
+            sortTreeDrag.placeholder = ph;
+            node.parentElement.insertBefore(ph, node);
+            node.style.display = 'none';
+
+            // 全局监听
+            document.addEventListener('mousemove', sortTreeDragMove);
+            document.addEventListener('mouseup', sortTreeDragEnd);
+            document.addEventListener('touchmove', sortTreeDragMoveTouch, { passive: false });
+            document.addEventListener('touchend', sortTreeDragEnd);
+        }
+
+        function sortTreeDragMove(e) {
+            if (!sortTreeDrag.active) return;
+            e.preventDefault();
+            moveSortTreeDrag(e.clientY);
+        }
+
+        function sortTreeDragMoveTouch(e) {
+            if (!sortTreeDrag.active) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            moveSortTreeDrag(touch.clientY);
+        }
+
+        function moveSortTreeDrag(clientY) {
+            if (!sortTreeDrag.active || !sortTreeDrag.ghost) return;
+            const ghost = sortTreeDrag.ghost;
+            ghost.style.top = (clientY - sortTreeDrag.offsetY) + 'px';
+
+            const container = sortTreeDrag.container;
+            const nodes = container.querySelectorAll('.sort-tree-node:not(.sort-drag-placeholder)');
+            let targetNode = null;
+            for (const n of nodes) {
+                const rect = n.getBoundingClientRect();
+                const mid = rect.top + rect.height / 2;
+                if (clientY < mid) {
+                    targetNode = n;
+                    break;
+                }
+            }
+            if (targetNode) {
+                container.insertBefore(sortTreeDrag.placeholder, targetNode);
+            } else {
+                container.appendChild(sortTreeDrag.placeholder);
+            }
+        }
+
+        function sortTreeDragEnd() {
+            if (!sortTreeDrag.active) return;
+            const node = sortTreeDrag.sourceEl;
+            const placeholder = sortTreeDrag.placeholder;
+            const ghost = sortTreeDrag.ghost;
+            const container = sortTreeDrag.container;
+
+            if (placeholder && node) {
+                container.insertBefore(node, placeholder);
+                placeholder.remove();
+                node.style.display = '';
+            }
+            if (ghost) ghost.remove();
+
+            sortTreeDrag.active = false;
+            sortTreeDrag.sourceEl = null;
+            sortTreeDrag.placeholder = null;
+            sortTreeDrag.ghost = null;
+            sortTreeDrag.container = null;
+            sortTreeDrag.sourcePath = null;
+
+            document.removeEventListener('mousemove', sortTreeDragMove);
+            document.removeEventListener('mouseup', sortTreeDragEnd);
+            document.removeEventListener('touchmove', sortTreeDragMoveTouch);
+            document.removeEventListener('touchend', sortTreeDragEnd);
+        }
+
+        function moveSortItem(path, direction) {
+            const container = $('groupSortTree');
+            const items = container.querySelectorAll('.sort-tree-node');
+            const paths = Array.from(items).map(el => el.dataset.path);
+            const idx = paths.indexOf(path);
+            if (idx === -1) return;
+            const newIdx = idx + direction;
+            if (newIdx < 0 || newIdx >= paths.length) return;
+            const parent = container;
+            const item1 = items[idx];
+            const item2 = items[newIdx];
+            if (direction === -1) {
+                parent.insertBefore(item1, item2);
+            } else {
+                parent.insertBefore(item2, item1);
+            }
+        }
+
+        function changeSortItemLevel(path, newLevel) {
+            const container = $('groupSortTree');
+            const node = container.querySelector(`.sort-tree-node[data-path="${escapeHtml(path)}"]`);
+            if (node) {
+                const row = node.querySelector('.node-row');
+                if (row) {
+                    const indent = (newLevel - 1) * 20;
+                    row.style.paddingLeft = (indent + 4) + 'px';
+                    const badge = row.querySelector('.node-level-badge');
+                    if (badge) badge.textContent = ['', '一级', '二级', '三级', '四级', '五级'][newLevel] || '未知';
+                    const select = row.querySelector('.level-select');
+                    if (select) select.value = newLevel;
+                    node.dataset.level = newLevel;
+                }
+            }
+        }
+
+        // 保存分组排序
+        function saveGroupSort() {
+            const container = $('groupSortTree');
+            const items = container.querySelectorAll('.sort-tree-node');
+            const newOrder = [];
+            const levelMap = {};
+            items.forEach(el => {
+                const path = el.dataset.path;
+                const row = el.querySelector('.node-row');
+                const select = row ? row.querySelector('.level-select') : null;
+                const level = parseInt(select ? select.value : (el.dataset.level || 1));
+                newOrder.push(path);
+                levelMap[path] = level;
+            });
+
+            // 构建新的路径
+            const newPaths = [];
+            const stack = [];
+            newOrder.forEach((path, index) => {
+                const targetLevel = levelMap[path] || 1;
+                const parts = path.split('/');
+                const name = parts[parts.length - 1];
+                while (stack.length > targetLevel - 1) {
+                    stack.pop();
+                }
+                while (stack.length < targetLevel - 1) {
+                    stack.push('未命名');
+                }
+                const parentPath = stack.length > 0 ? stack.join('/') : '';
+                const newPath = parentPath ? parentPath + '/' + name : name;
+                newPaths.push(newPath);
+                stack.push(name);
+            });
+
+            const pathSet = new Set(newPaths);
+            if (pathSet.size !== newPaths.length) {
+                showToast('❌ 路径冲突，请检查层级设置');
+                return;
+            }
+
+            const pathMap = {};
+            newOrder.forEach((oldPath, idx) => {
+                pathMap[oldPath] = newPaths[idx];
+            });
+
+            state.allData.forEach(d => {
+                const oldCat = d.category;
+                if (oldCat && pathMap[oldCat]) {
+                    d.category = pathMap[oldCat];
+                } else if (oldCat) {
+                    for (const oldParent in pathMap) {
+                        if (oldCat.startsWith(oldParent + '/')) {
+                            const newParent = pathMap[oldParent];
+                            d.category = oldCat.replace(oldParent, newParent);
+                            break;
+                        }
+                    }
+                }
+            });
+
+            const finalOrder = newPaths;
+            state.categoryOrder = finalOrder;
+            localStorage.setItem('nav_categoryOrder', JSON.stringify(finalOrder));
+            saveLocalData(state.allData);
+            syncSettingsToCloud();
+
+            if (state.isOnline) {
+                const client = getClient();
+                const updates = state.allData.map(d => client.from('nav_links').update({ category: d.category }).eq('id', d
+                    .id));
+                Promise.all(updates).then(() => {
+                    showToast('✅ 分组排序已保存并同步');
+                }).catch(() => {
+                    showToast('⚠️ 已保存本地，云端同步失败');
+                });
+            } else {
+                showToast('✅ 分组排序已保存');
+            }
+
+            if (state.defaultCategory && pathMap[state.defaultCategory]) {
+                state.defaultCategory = pathMap[state.defaultCategory];
+                localStorage.setItem('nav_defaultCategory', state.defaultCategory);
+                syncSettingsToCloud();
+            } else if (state.defaultCategory) {
+                for (const oldParent in pathMap) {
+                    if (state.defaultCategory.startsWith(oldParent + '/')) {
+                        state.defaultCategory = state.defaultCategory.replace(oldParent, pathMap[oldParent]);
+                        localStorage.setItem('nav_defaultCategory', state.defaultCategory);
+                        syncSettingsToCloud();
+                        break;
+                    }
+                }
+            }
+
+            renderAll();
+            closeModal('groupSortModal');
+        }
+
+        // 打开分组排序弹窗
+        function openGroupSortModal() {
+            // 初始化展开状态：默认全部展开
+            const allItems = getSortTreeItems();
+            allItems.forEach(item => {
+                if (item.hasChildren) {
+                    if (state.sortTreeExpand[item.path] === undefined) {
+                        state.sortTreeExpand[item.path] = true;
+                    }
+                }
+            });
+            state.sortFilter = 'all';
+            // 更新筛选按钮状态
+            document.querySelectorAll('#sortFilterBar .filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === 'all');
+            });
+            renderSortTree();
+            openModal('groupSortModal');
+
+            // 绑定保存按钮
+            const saveBtn = $('btnSaveGroupSort');
+            saveBtn.removeEventListener('click', saveGroupSort);
+            saveBtn.addEventListener('click', saveGroupSort);
+
+            // 绑定筛选按钮
+            document.querySelectorAll('#sortFilterBar .filter-btn').forEach(btn => {
+                btn.removeEventListener('click', sortFilterHandler);
+                btn.addEventListener('click', sortFilterHandler);
+            });
+        }
+
+        function sortFilterHandler(e) {
+            const filter = this.dataset.filter;
+            state.sortFilter = filter;
+            document.querySelectorAll('#sortFilterBar .filter-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.filter === filter);
+            });
+            renderSortTree();
+        }
 
         // ==================== 首页树形渲染（侧栏） ====================
         function renderTabs() {
@@ -1311,8 +1992,6 @@
                     const isActive = (state.currentCategory === fullPath);
                     const isDefault = (state.defaultCategory === fullPath);
                     const folderIcon = hasChildren ? '📂' : '📄';
-
-                    // 获取折叠状态：默认折叠（true），除非明确设置为false（展开）
                     const isCollapsed = state.treeCollapsed[fullPath] !== false;
                     const ulDisplay = isCollapsed ? 'none' : 'block';
                     const toggleIcon = isCollapsed ? '▶' : '▼';
@@ -1343,10 +2022,9 @@
             html += renderNode(tree, '');
             tabsEl.innerHTML = html;
 
-            // 绑定点击事件
+            // 绑定事件
             tabsEl.querySelectorAll('.tab-node').forEach(node => {
                 node.addEventListener('click', function(e) {
-                    // 如果点击的是折叠图标，不切换分类
                     if (e.target.closest('.toggle-icon')) return;
                     const path = this.dataset.path;
                     if (path) {
@@ -1391,7 +2069,7 @@
                 });
             });
 
-            // 绑定折叠图标事件
+            // 折叠图标事件
             tabsEl.querySelectorAll('.toggle-icon').forEach(toggle => {
                 toggle.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1399,11 +2077,9 @@
                     const childUl = li ? li.querySelector('ul') : null;
                     if (childUl) {
                         const parentPath = childUl.dataset.parent;
-                        // 切换显示
                         const isCollapsed = childUl.style.display === 'none';
                         childUl.style.display = isCollapsed ? 'block' : 'none';
                         this.textContent = isCollapsed ? '▼' : '▶';
-                        // 保存状态：true表示折叠（隐藏）
                         state.treeCollapsed[parentPath] = !isCollapsed;
                         localStorage.setItem('nav_tree_collapsed', JSON.stringify(state.treeCollapsed));
                     }
@@ -1628,7 +2304,6 @@
                             renameCategory(path, newName.trim());
                         }
                     } else if (action === 'groupSortMode') {
-                        // 调用原有的分组排序弹窗（未修改）
                         openGroupSortModal();
                     } else if (action === 'setDefaultCategory') {
                         setDefaultCategory(path);
@@ -2356,7 +3031,6 @@
             const validOrdered = ordered.filter(c => catSet.has(c) && c !== '全部');
             const missing = Array.from(catSet).filter(c => !validOrdered.includes(c) && c !== '全部');
 
-            // 确保当前分类有效，如果无效则切换到默认或全部
             if (!state.categories.includes(state.currentCategory)) {
                 if (state.defaultCategory && state.categories.includes(state.defaultCategory)) {
                     state.currentCategory = state.defaultCategory;
@@ -2631,19 +3305,16 @@
 
         // ==================== 初始化 ====================
         (function init() {
-            // ===== 修改：页面加载时强制跳转到默认分组 =====
+            // 页面加载时跳转到默认分组
             const savedDefault = localStorage.getItem('nav_defaultCategory');
             if (savedDefault) {
                 state.defaultCategory = savedDefault;
-                // 强制设置当前分类为默认分组
                 state.currentCategory = savedDefault;
                 localStorage.setItem('nav_currentCategory', savedDefault);
             }
 
             const savedOrder = localStorage.getItem('nav_categoryOrder');
             if (savedOrder) try { state.categoryOrder = JSON.parse(savedOrder); } catch (e) {}
-
-            // 加载折叠状态（已在 state 中初始化）
 
             applyTheme();
             applyView();
