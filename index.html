@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" async></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" async></script>
     <style>
-        /* ===== 完整样式（与之前一致，略作精简） ===== */
+        /* ===== 完整样式 ===== */
         :root {
             --bg: #f5f7fa;
             --bg-card: #ffffff;
@@ -52,7 +52,16 @@
             --warning: #fbbf24;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; min-height: 100vh; user-select: none; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
 
         .header {
             position: sticky; top: 0; z-index: 200; background: var(--bg-card); border-bottom: 1px solid var(--border);
@@ -60,11 +69,18 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.04);
             height: var(--header-height);
         }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
         .header h1 {
             font-size: 20px; font-weight: 700;
             background: linear-gradient(135deg, var(--primary), #ec4899);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            display: flex; align-items: center; gap: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         .sync-status { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
         .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-secondary); transition: 0.3s; }
@@ -84,19 +100,19 @@
             position: fixed;
             top: var(--header-height);
             left: 0;
-            width: var(--sidebar-width);
+            width: auto;
+            max-width: 280px;
+            min-width: 180px;
             height: calc(100vh - var(--header-height));
             background: var(--bg);
             border-right: 1px solid var(--border);
             z-index: 150;
             overflow-y: auto;
             padding: 12px 8px;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
             transform: translateX(0);
         }
-        .sidebar.collapsed {
-            transform: translateX(-100%);
-        }
+        .sidebar.collapsed { transform: translateX(-100%); opacity: 0; pointer-events: none; }
         .sidebar::-webkit-scrollbar { width: 4px; }
         .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
@@ -110,9 +126,7 @@
             padding-left: 16px;
             margin: 0;
         }
-        .tabs-tree li {
-            margin-bottom: 2px;
-        }
+        .tabs-tree li { margin-bottom: 2px; }
         .tabs-tree .tab-node {
             display: flex;
             align-items: center;
@@ -123,10 +137,9 @@
             gap: 6px;
             font-size: 14px;
             color: var(--text-secondary);
+            position: relative;
         }
-        .tabs-tree .tab-node:hover {
-            background: var(--bg-card);
-        }
+        .tabs-tree .tab-node:hover { background: var(--bg-card); }
         .tabs-tree .tab-node.active {
             background: var(--primary);
             color: #fff;
@@ -139,18 +152,13 @@
             flex-shrink: 0;
             transition: transform 0.2s;
         }
-        .tabs-tree .tab-node .toggle-icon.collapsed {
-            transform: rotate(-90deg);
-        }
-        .tabs-tree .tab-node .folder-icon {
-            font-size: 16px;
-            flex-shrink: 0;
-        }
+        .tabs-tree .tab-node .toggle-icon.collapsed { transform: rotate(-90deg); }
+        .tabs-tree .tab-node .folder-icon { font-size: 16px; flex-shrink: 0; }
         .tabs-tree .tab-node .node-name {
             flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            word-break: break-word;
+            white-space: normal;
+            line-height: 1.4;
         }
         .tabs-tree .tab-node .node-count {
             font-size: 12px;
@@ -158,20 +166,21 @@
             background: rgba(0,0,0,0.08);
             padding: 0 6px;
             border-radius: 10px;
+            flex-shrink: 0;
+            margin-left: 4px;
         }
-        .tabs-tree .tab-node.active .node-count {
-            background: rgba(255,255,255,0.2);
-        }
+        .tabs-tree .tab-node.active .node-count { background: rgba(255,255,255,0.2); }
 
-        /* ===== 主内容区 ===== */
         .main-wrapper {
             margin-left: var(--sidebar-width);
             padding: 16px 24px 80px;
             max-width: calc(1400px + var(--sidebar-width));
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, max-width 0.3s ease, margin 0.3s ease;
         }
         .main-wrapper.shifted {
-            margin-left: 0;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 1400px;
         }
 
         #searchBar {
@@ -221,9 +230,28 @@
         .view-list .swipe-wrapper .card .card-desc { -webkit-line-clamp: 1; }
 
         .sort-mode .swipe-wrapper { cursor: default; border: 2px dashed var(--border); border-radius: var(--radius); transition: border-color 0.2s; }
-        .sort-mode .drag-handle-badge { display: flex; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); z-index: 5; font-size: 20px; color: var(--primary); opacity: 0.7; cursor: grab; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.5); backdrop-filter: blur(4px); }
+        .sort-mode .drag-handle-badge {
+            display: flex;
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
+            font-size: 20px;
+            color: var(--primary);
+            opacity: 0.7;
+            cursor: grab;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+        }
         .sort-mode .drag-handle-badge:active { cursor: grabbing; }
-        .view-grid .sort-mode .drag-handle-badge { left: 8px; top: 8px; transform: none; }
+        .view-grid .sort-mode .drag-handle-badge {
+            right: 8px;
+            top: 8px;
+            transform: none;
+        }
         .sort-mode .card { cursor: default !important; }
         .sort-mode .card:hover { transform: none !important; box-shadow: var(--shadow) !important; border-color: var(--border) !important; }
         .sort-mode .card::before { opacity: 0 !important; }
@@ -233,6 +261,39 @@
         .multi-select-mode .card { cursor: pointer !important; }
         .multi-select-mode .card:hover { transform: none !important; box-shadow: var(--shadow) !important; border-color: var(--border) !important; }
         .multi-select-mode .card::before { opacity: 0 !important; }
+
+        /* 编辑开关 - 卡片右上角按钮 */
+        .edit-mode .card .edit-btn {
+            display: flex !important;
+        }
+        .card .edit-btn {
+            display: none;
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card .edit-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+        .card .edit-btn:active {
+            transform: scale(0.9);
+        }
 
         .sort-banner {
             position: sticky; top: calc(var(--header-height) + 4px); z-index: 95;
@@ -284,10 +345,8 @@
 
         .drag-ghost { position: fixed; z-index: 9999; pointer-events: none; opacity: 0.92; transform: scale(1.03) rotate(1.5deg); box-shadow: 0 15px 40px rgba(0,0,0,0.25); border-radius: var(--radius); background: var(--bg-card); border: 1px solid var(--primary); }
 
-        /* 移除左滑相关样式，保留 swiped 以防万一 */
         .swipe-wrapper { position: relative; overflow: hidden; border-radius: var(--radius); }
         .swipe-wrapper .card { position: relative; z-index: 2; transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94); will-change: transform; }
-        /* 不再使用 swiped 类，但保留以防其他样式影响 */
         .swipe-wrapper .card { transform: none !important; }
         .swipe-actions { display: none !important; }
 
@@ -297,6 +356,9 @@
             border-radius: var(--radius); text-decoration: none; color: var(--text);
             transition: all var(--transition); box-shadow: var(--shadow);
             position: relative; overflow: hidden; cursor: context-menu;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), #ec4899); opacity: 0; transition: opacity 0.3s; }
         .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--primary); }
@@ -306,7 +368,6 @@
         .card-name { font-size: var(--font-name); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .card-desc { font-size: var(--font-desc); color: var(--text-secondary); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: var(--desc-lines); -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
 
-        /* ===== FAB 组 ===== */
         .fab-group {
             position: fixed;
             bottom: 32px;
@@ -318,52 +379,33 @@
             z-index: 80;
         }
         .fab {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
+            width: 56px; height: 56px; border-radius: 50%;
             background: linear-gradient(135deg, var(--primary), #ec4899);
-            color: white;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
+            color: white; border: none; font-size: 28px; cursor: pointer;
             box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            line-height: 1;
-            text-align: center;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s; line-height: 1; text-align: center;
         }
-        .fab:hover {
-            transform: scale(1.1) rotate(90deg);
-        }
+        .fab:hover { transform: scale(1.1) rotate(90deg); }
         .fab-search {
             background: linear-gradient(135deg, var(--primary), #ec4899);
-            color: white;
-            font-size: 28px;
+            color: white; font-size: 28px;
             box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
         }
-        .fab-search:hover {
-            transform: scale(1.1) rotate(90deg);
-        }
+        .fab-search:hover { transform: scale(1.1) rotate(90deg); }
         .fab-search.active {
             background: var(--bg-card);
             color: var(--text);
             border: 2px solid var(--primary);
             box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
         }
-        .fab-search.active:hover {
-            transform: scale(1.1) rotate(0deg);
-        }
+        .fab-search.active:hover { transform: scale(1.1) rotate(0deg); }
         .fab-category {
             background: linear-gradient(135deg, var(--primary), #ec4899);
-            color: white;
-            font-size: 28px;
+            color: white; font-size: 28px;
             box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
         }
-        .fab-category:hover {
-            transform: scale(1.1) rotate(90deg);
-        }
+        .fab-category:hover { transform: scale(1.1) rotate(90deg); }
 
         .ctx-menu { position: fixed; z-index: 2000; background: var(--modal-bg); border: 1px solid var(--border); border-radius: 14px; padding: 6px; min-width: 190px; box-shadow: 0 12px 48px rgba(0,0,0,0.2); animation: ctxIn 0.15s ease; display: none; }
         .ctx-menu.show { display: block; }
@@ -404,106 +446,76 @@
         .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
 
-        /* 设置中的分组管理树形 */
-        #categoryManage {
-            margin-top: 8px;
+        /* 分组排序弹窗中的样式（支持拖拽） */
+        #groupSortList {
             max-height: 400px;
             overflow-y: auto;
+            margin: 12px 0;
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 8px;
             background: var(--bg);
+            min-height: 60px;
         }
-        .cat-tree {
-            list-style: none;
-            padding-left: 0;
-            margin: 0;
-        }
-        .cat-tree ul {
-            list-style: none;
-            padding-left: 20px;
-            margin: 0;
-        }
-        .cat-tree li {
-            margin-bottom: 2px;
-        }
-        .cat-item {
+        .sort-item {
             display: flex;
             align-items: center;
-            padding: 5px 8px;
-            background: var(--bg-card);
-            border-radius: 6px;
-            border: 1px solid transparent;
-            transition: background 0.15s, border-color 0.15s;
-            gap: 6px;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
+            cursor: grab;
+            transition: background 0.15s;
+            user-select: none;
         }
-        .cat-item:hover {
-            background: var(--bg);
-            border-color: var(--border);
-        }
-        .cat-item .cat-toggle {
-            background: none;
-            border: none;
-            font-size: 14px;
-            cursor: pointer;
+        .sort-item:last-child { border-bottom: none; }
+        .sort-item:hover { background: var(--bg-card); }
+        .sort-item:active { cursor: grabbing; }
+        .sort-item .drag-handle-sort {
+            font-size: 18px;
             color: var(--text-secondary);
-            width: 22px;
-            text-align: center;
-            transition: transform 0.2s;
-            padding: 0;
-            flex-shrink: 0;
+            opacity: 0.5;
+            cursor: grab;
+            padding: 0 4px;
         }
-        .cat-item .cat-toggle.collapsed {
-            transform: rotate(-90deg);
-        }
-        .cat-item .cat-name {
+        .sort-item .drag-handle-sort:active { cursor: grabbing; }
+        .sort-item .item-name {
             flex: 1;
             font-size: 14px;
-            font-weight: 500;
+            word-break: break-word;
+        }
+        .sort-item .level-select {
+            width: 70px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text);
+            font-size: 13px;
             cursor: pointer;
-            padding: 2px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
-        .cat-item .cat-name .folder-icon {
-            font-size: 16px;
-        }
-        .cat-item .cat-actions {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            flex-shrink: 0;
-        }
-        .cat-item .cat-actions button {
+        .sort-item .arrow-btn {
             background: none;
             border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 1px 6px;
-            font-size: 12px;
+            border-radius: 6px;
+            padding: 2px 8px;
             cursor: pointer;
+            font-size: 16px;
+            line-height: 1.4;
             color: var(--text-secondary);
             transition: all 0.2s;
-            line-height: 1.5;
         }
-        .cat-item .cat-actions button:hover {
+        .sort-item .arrow-btn:hover {
             background: var(--primary);
             color: #fff;
             border-color: var(--primary);
         }
-        .cat-item .cat-actions .default-radio {
-            margin-right: 2px;
-            accent-color: var(--primary);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .cat-item .cat-count {
-            font-size: 12px;
-            color: var(--text-secondary);
-            background: var(--bg);
-            padding: 0 6px;
-            border-radius: 10px;
-            margin-left: 4px;
+        /* 拖拽占位 */
+        .sort-drag-placeholder {
+            border: 2px dashed var(--primary);
+            border-radius: 6px;
+            background: rgba(99,102,241,0.08);
+            margin: 2px 0;
+            height: 40px;
         }
 
         .mode-switch {
@@ -550,12 +562,13 @@
         .rls-alert code { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 6px; font-family: monospace; word-break: break-all; display: block; margin: 8px 0; }
         .rls-alert button { margin-top: 6px; padding: 6px 14px; background: var(--danger); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
 
-        /* ===== 响应式 ===== */
         @media (max-width: 768px) {
             .header { padding: 12px 16px; }
             .header h1 { font-size: 18px; }
             .sidebar {
                 width: 280px;
+                max-width: 280px;
+                min-width: 200px;
                 transform: translateX(-100%);
                 box-shadow: 2px 0 12px rgba(0,0,0,0.1);
                 top: 0;
@@ -563,9 +576,7 @@
                 padding-top: var(--header-height);
                 border-right: 1px solid var(--border);
             }
-            .sidebar.open {
-                transform: translateX(0);
-            }
+            .sidebar.open { transform: translateX(0); opacity: 1; pointer-events: auto; }
             .sidebar-overlay {
                 position: fixed;
                 inset: 0;
@@ -573,12 +584,16 @@
                 z-index: 140;
                 display: none;
             }
-            .sidebar-overlay.show {
-                display: block;
-            }
+            .sidebar-overlay.show { display: block; }
             .main-wrapper {
                 margin-left: 0 !important;
                 padding: 12px 16px 80px;
+                max-width: 100% !important;
+            }
+            .main-wrapper.shifted {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                max-width: 100% !important;
             }
             #searchBar { padding: 6px 0; top: calc(var(--header-height) + 4px); }
             .content { padding: 0; }
@@ -593,14 +608,9 @@
             .sort-banner { top: calc(var(--header-height) + 4px); font-size: 13px; padding: 8px 14px; flex-wrap: wrap; gap: 8px; }
             .sort-quick-actions button { font-size: 12px; padding: 2px 6px; }
             .multi-select-toolbar { bottom: 80px; padding: 10px 16px; flex-wrap: wrap; justify-content: center; gap: 10px; }
-        }
-        @media (min-width: 769px) {
-            .sidebar-overlay { display: none !important; }
-            .sidebar.collapsed {
-                transform: translateX(-100%);
-            }
-            .main-wrapper.shifted {
-                margin-left: 0;
+            /* 移动端右滑调出侧栏 - 整个屏幕都可以触发 */
+            .main-wrapper {
+                touch-action: pan-y;
             }
         }
     </style>
@@ -608,7 +618,9 @@
 <body>
 
     <header class="header">
-        <h1>📌 导航页 <div class="sync-status" id="syncStatus"><div class="sync-dot" id="syncDot"></div><span id="syncText">初始化...</span></div></h1>
+        <div class="header-left">
+            <h1>📌 导航页 <div class="sync-status" id="syncStatus"><div class="sync-dot" id="syncDot"></div><span id="syncText">初始化...</span></div></h1>
+        </div>
         <div class="header-actions">
             <button class="icon-btn" id="btnView" title="切换视图"><span id="viewIcon">☰</span></button>
             <button class="icon-btn" id="btnTheme" title="切换主题"><span id="themeIcon">🌙</span></button>
@@ -648,7 +660,6 @@
         </div>
     </div>
 
-    <!-- ===== FAB 组 ===== -->
     <div class="fab-group">
         <button class="fab fab-category" id="btnCategory" title="切换分类">📂</button>
         <button class="fab fab-search" id="btnSearch" title="搜索">🔍</button>
@@ -656,9 +667,13 @@
     </div>
     <div class="toast" id="toast"></div>
 
+    <!-- 右键菜单 -->
     <div class="ctx-menu" id="ctxMenu">
         <div class="ctx-item" data-action="edit">✏️ 编辑</div>
         <div class="ctx-item" data-action="move">📂 移动到分组...</div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" data-action="renameCategory">✏️ 重命名分组</div>
+        <div class="ctx-item" data-action="groupSortMode">↕️ 分组排序</div>
         <div class="ctx-divider"></div>
         <div class="ctx-item" data-action="setDefaultCategory">⭐ 设为默认分组</div>
         <div class="ctx-divider"></div>
@@ -701,24 +716,18 @@
             </div>
 
             <hr class="section-divider">
-            <h3>📂 分组管理</h3>
-            <p class="subtitle">使用 <code>/</code> 分隔创建多级分组，例如 <code>书签栏/AI</code>。点击分类名称或单选框设为默认，⬆⬇ 调整同级顺序。</p>
-            <div id="categoryManage"></div>
-
-            <hr class="section-divider">
-            <h3>↕️ 排序与多选模式</h3>
+            <!-- ===== 编辑开关 ===== -->
+            <h3>✏️ 编辑模式</h3>
             <div class="mode-switch">
-                <div><div class="mode-label">🔀 拖拽排序</div><div class="mode-desc">开启后可通过拖拽把手调整卡片顺序</div></div>
-                <label class="switch"><input type="checkbox" id="sortModeToggle"><span class="slider"></span></label>
-            </div>
-            <div class="mode-switch">
-                <div><div class="mode-label">☑️ 多选模式</div><div class="mode-desc">开启后可点击卡片多选，进行批量操作</div></div>
-                <label class="switch"><input type="checkbox" id="multiSelectToggle"><span class="slider"></span></label>
+                <div><div class="mode-label">开启编辑按钮</div><div class="mode-desc">在每个卡片右上角显示 ✏️ 按钮，点击快速编辑</div></div>
+                <label class="switch"><input type="checkbox" id="editModeToggle"><span class="slider"></span></label>
             </div>
 
             <hr class="section-divider">
             <h3>☁️ 数据同步</h3>
             <div class="btn-group">
+                <!-- 刷新按钮放在这里 -->
+                <button class="btn btn-primary btn-sm" id="btnRefresh" title="刷新在线状态">🔄 刷新状态</button>
                 <button class="btn btn-success btn-sm" id="btnUploadToCloud">⬆️ 本地→云端</button>
                 <button class="btn btn-warning btn-sm" id="btnDownloadFromCloud">⬇️ 云端→本地</button>
             </div>
@@ -747,6 +756,22 @@
         </div>
     </div>
 
+    <!-- 分组排序弹窗 -->
+    <div class="modal-overlay" id="groupSortModal">
+        <div class="modal" style="max-width:620px;">
+            <div class="modal-header">
+                <h2>📂 分组排序</h2>
+                <button class="close-btn" onclick="closeModal('groupSortModal')">&times;</button>
+            </div>
+            <p class="subtitle">拖拽分组调整顺序，或使用上下箭头微调</p>
+            <div id="groupSortList"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('groupSortModal')">取消</button>
+                <button class="btn btn-primary" id="btnSaveGroupSort">💾 保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 添加/编辑弹窗 -->
     <div class="modal-overlay" id="addModal">
         <div class="modal">
@@ -767,7 +792,7 @@
         </div>
     </div>
 
-    <!-- 移动分组弹窗 -->
+    <!-- 移动卡片分组弹窗 -->
     <div class="modal-overlay" id="moveModal">
         <div class="modal" style="max-width:400px;">
             <div class="modal-header"><h2>📂 移动到分组</h2><button class="close-btn" onclick="closeModal('moveModal')">&times;</button></div>
@@ -828,15 +853,18 @@
             density: parseInt(localStorage.getItem('nav_density') ?? '0'),
             ctxItem: null,
             ctxCategoryPath: null,
+            ctxCategoryType: null,
             cloudCount: 0,
             sortMode: localStorage.getItem('nav_sortMode') === 'true',
             multiSelectMode: localStorage.getItem('nav_multiSelectMode') === 'true',
+            groupSortMode: false,
             categoryOrder: JSON.parse(localStorage.getItem('nav_categoryOrder') || 'null') || null,
             defaultCategory: localStorage.getItem('nav_defaultCategory') || null,
             searchKeyword: '',
             searchActive: false,
             selectedIds: [],
             sidebarOpen: localStorage.getItem('nav_sidebarOpen') === 'true' || window.innerWidth > 768,
+            editMode: localStorage.getItem('nav_editMode') === 'true',
         };
         const $ = id => document.getElementById(id);
         const LOCAL_KEY = 'nav_local_data';
@@ -892,6 +920,45 @@
             toggleSidebar();
         });
 
+        // ===== 移动端右滑调出侧栏 ===== (整屏触发)
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwipingSidebar = false;
+
+        document.addEventListener('touchstart', function(e) {
+            // 仅在移动端生效
+            if (window.innerWidth > 768) return;
+            // 如果在侧栏上或弹窗上，忽略
+            if (e.target.closest('.sidebar') || e.target.closest('.modal-overlay')) return;
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            isSwipingSidebar = false;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', function(e) {
+            if (window.innerWidth > 768) return;
+            if (e.target.closest('.sidebar') || e.target.closest('.modal-overlay')) return;
+            if (touchStartX === 0) return;
+            const touch = e.touches[0];
+            const dx = touch.clientX - touchStartX;
+            const dy = touch.clientY - touchStartY;
+            // 水平滑动，且从屏幕任何位置开始（移除了 left < 40 的限制）
+            if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) && dx > 0) {
+                isSwipingSidebar = true;
+                e.preventDefault();
+                if (!state.sidebarOpen) {
+                    toggleSidebar(true);
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', function() {
+            touchStartX = 0;
+            touchStartY = 0;
+            isSwipingSidebar = false;
+        }, { passive: true });
+
         // ==================== 工具函数 ====================
         function showToast(msg, d = 3000) { const t = $('toast');
             t.textContent = msg;
@@ -919,6 +986,57 @@
         function closeModal(id) { $(id).classList.remove('show'); }
         document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if (e.target === el) el
                     .classList.remove('show') }));
+
+        // ==================== 云端同步（设置） ====================
+        async function syncSettingsToCloud() {
+            if (state.mode !== 'online') return;
+            try {
+                const client = getClient();
+                const payload = {
+                    id: 'app_settings',
+                    category_order: state.categoryOrder || [],
+                    default_category: state.defaultCategory || null,
+                    updated_at: new Date().toISOString()
+                };
+                const { error } = await client.from('nav_settings').upsert(payload, { onConflict: 'id' });
+                if (error) console.warn('设置同步云端失败:', error);
+            } catch (e) { console.warn('设置同步异常:', e); }
+        }
+
+        async function loadSettingsFromCloud() {
+            if (state.mode !== 'online') return;
+            try {
+                const client = getClient();
+                const { data, error } = await client.from('nav_settings')
+                    .select('category_order, default_category')
+                    .eq('id', 'app_settings')
+                    .maybeSingle();
+                if (error) throw error;
+                if (data) {
+                    if (data.category_order) {
+                        state.categoryOrder = data.category_order;
+                        localStorage.setItem('nav_categoryOrder', JSON.stringify(data.categoryOrder));
+                    }
+                    if (data.default_category) {
+                        state.defaultCategory = data.default_category;
+                        localStorage.setItem('nav_defaultCategory', data.default_category);
+                    }
+                }
+            } catch (e) { console.warn('加载云端设置失败:', e); }
+        }
+
+        function updateSettingsAndSync(order, defaultCat) {
+            if (order !== undefined) {
+                state.categoryOrder = order;
+                localStorage.setItem('nav_categoryOrder', JSON.stringify(order));
+            }
+            if (defaultCat !== undefined) {
+                state.defaultCategory = defaultCat;
+                localStorage.setItem('nav_defaultCategory', defaultCat);
+            }
+            syncSettingsToCloud();
+            renderAll();
+        }
 
         // ==================== 密度滑块 ====================
         function applyDensity(val) {
@@ -971,19 +1089,81 @@
             const { url } = getConfig();
             $('displayUrl').textContent = url || '未设置';
         }
-        $('modeToggle').onchange = () => {
-            state.mode = $('modeToggle').checked ? 'online' : 'offline';
-            localStorage.setItem('nav_mode', state.mode);
-            updateModeUI();
-            updateSyncInfo();
-            if (state.mode === 'offline') {
-                updateSyncStatus(false, '离线模式');
-                state.allData = getLocalData();
-                renderAll();
-                showToast('💾 已切换离线模式');
-            } else { loadData(true);
-                showToast('📡 已切换在线模式'); }
-        };
+
+        // ==================== 保存并连接按钮 ====================
+        function setupSaveSettingsButton() {
+            const btn = document.getElementById('btnSaveSettings');
+            if (!btn) return;
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const u = document.getElementById('inputUrl').value.trim().replace(/\/+$/, '');
+                const k = document.getElementById('inputKey').value.trim();
+                if (!u || !k) {
+                    showToast('❌ 请填写完整的 URL 和 Anon Key');
+                    return;
+                }
+                try {
+                    localStorage.setItem('sb_url', u);
+                    localStorage.setItem('sb_key', k);
+                    showToast('✅ 配置已保存，正在连接...');
+                    refreshConfigDisplay();
+                    closeModal('settingsModal');
+                    if (state.mode === 'online') {
+                        await loadData(true);
+                    } else {
+                        state.mode = 'online';
+                        localStorage.setItem('nav_mode', 'online');
+                        const toggle = document.getElementById('modeToggle');
+                        if (toggle) toggle.checked = true;
+                        updateModeUI();
+                        await loadData(true);
+                    }
+                    showToast('✅ 已连接到 Supabase');
+                } catch (err) {
+                    console.error('保存配置失败:', err);
+                    showToast('❌ 连接失败: ' + (err.message || '未知错误'));
+                }
+            });
+        }
+
+        // ==================== 编辑开关 ====================
+        function setupEditModeToggle() {
+            const toggle = document.getElementById('editModeToggle');
+            if (!toggle) return;
+            toggle.checked = state.editMode;
+            toggle.addEventListener('change', function() {
+                state.editMode = this.checked;
+                localStorage.setItem('nav_editMode', String(state.editMode));
+                closeModal('settingsModal');
+                renderContent();
+                showToast(state.editMode ? '✏️ 编辑模式已开启' : '✅ 编辑模式已关闭');
+            });
+        }
+
+        // ==================== 模式切换事件 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            const modeToggle = document.getElementById('modeToggle');
+            if (modeToggle) {
+                modeToggle.addEventListener('change', function() {
+                    state.mode = this.checked ? 'online' : 'offline';
+                    localStorage.setItem('nav_mode', state.mode);
+                    updateModeUI();
+                    updateSyncInfo();
+                    if (state.mode === 'offline') {
+                        updateSyncStatus(false, '离线模式');
+                        state.allData = getLocalData();
+                        renderAll();
+                        showToast('💾 已切换离线模式');
+                    } else {
+                        loadData(true);
+                        showToast('📡 已切换在线模式');
+                    }
+                });
+            }
+            setupEditModeToggle();
+        });
 
         // ==================== 状态指示 & 云端统计 ====================
         function updateSyncStatus(on, text) {
@@ -1018,7 +1198,7 @@
             localStorage.setItem('theme', state.theme);
             applyTheme() };
         $('btnView').onclick = () => {
-            if (state.sortMode || state.multiSelectMode) { showToast('⚠️ 请先退出排序/多选模式'); return }
+            if (state.sortMode || state.multiSelectMode) { showToast('⚠️ 请先退出当前模式'); return }
             state.viewMode = state.viewMode === 'grid' ? 'list' : 'grid';
             localStorage.setItem('viewMode', state.viewMode);
             applyView();
@@ -1036,19 +1216,43 @@
             updateSyncInfo();
             $('densitySlider').value = state.density;
             applyDensity(state.density);
-            $('sortModeToggle').checked = state.sortMode;
-            $('multiSelectToggle').checked = state.multiSelectMode;
-            renderCategoryManage();
+            setupSaveSettingsButton();
+            const editToggle = document.getElementById('editModeToggle');
+            if (editToggle) editToggle.checked = state.editMode;
             openModal('settingsModal');
         }
         $('btnSettings').onclick = openSettings;
-        $('btnSaveSettings').onclick = async () => { const u = $('inputUrl').value.trim().replace(/\/+$/, ''),
-                k = $('inputKey').value.trim(); if (!u || !k) { showToast('❌ 请填写完整'); return } localStorage.setItem(
-                    'sb_url', u);
-            localStorage.setItem('sb_key', k);
-            refreshConfigDisplay();
-            closeModal('settingsModal');
-            await loadData(true) };
+
+        // ==================== 刷新在线状态 ====================
+        document.getElementById('btnRefresh').addEventListener('click', async function() {
+            if (state.mode !== 'online') {
+                showToast('💾 当前为离线模式，请切换到在线模式');
+                return;
+            }
+            showToast('🔄 正在刷新在线状态...');
+            try {
+                const client = getClient();
+                // 尝试执行一个轻量查询来检测连接状态
+                const { data, error } = await client.from('nav_links')
+                    .select('count', { count: 'exact', head: true })
+                    .limit(0);
+                if (error) throw error;
+                updateSyncStatus(true, '✅ 在线');
+                showToast('✅ 连接正常');
+                // 同时刷新数据
+                await loadData(true);
+            } catch (err) {
+                console.warn('刷新状态失败:', err);
+                updateSyncStatus(false, '❌ 连接断开');
+                showToast('❌ 连接失败: ' + (err.message || '未知错误'));
+                // 尝试使用缓存数据
+                const cached = getLocalData();
+                if (cached.length > 0) {
+                    state.allData = cached;
+                    renderAll();
+                }
+            }
+        });
 
         // ==================== 分类相关 ====================
         function getCategoryPaths() {
@@ -1083,6 +1287,367 @@
                 const cat = d.category || '';
                 return cat === path || cat.startsWith(path + '/');
             }).length;
+        }
+
+        // ==================== 分组排序弹窗（拖拽+箭头） ====================
+        function buildTreeData(paths) {
+            const tree = {};
+            paths.forEach(p => {
+                const parts = p.split('/').filter(s => s.trim());
+                let node = tree;
+                parts.forEach(part => {
+                    if (!node[part]) node[part] = {};
+                    node = node[part];
+                });
+            });
+            return tree;
+        }
+
+        function flattenTree(tree, parentPath, level, list) {
+            const keys = Object.keys(tree);
+            keys.forEach(key => {
+                const fullPath = parentPath ? parentPath + '/' + key : key;
+                const children = tree[key];
+                list.push({ name: key, path: fullPath, level: level, children: children });
+                if (Object.keys(children).length > 0) {
+                    flattenTree(children, fullPath, level + 1, list);
+                }
+            });
+        }
+
+        // 拖拽排序相关
+        let sortDrag = {
+            active: false,
+            sourceEl: null,
+            placeholder: null,
+            ghost: null,
+            offsetY: 0,
+            container: null,
+        };
+
+        function initSortDrag() {
+            const container = document.getElementById('groupSortList');
+            if (!container) return;
+
+            // 鼠标拖拽
+            container.addEventListener('mousedown', function(e) {
+                const item = e.target.closest('.sort-item');
+                if (!item) return;
+                if (e.target.closest('.level-select') || e.target.closest('.arrow-btn')) return;
+                e.preventDefault();
+                startSortDrag(item, e.clientY);
+            });
+
+            // 触摸拖拽
+            container.addEventListener('touchstart', function(e) {
+                const item = e.target.closest('.sort-item');
+                if (!item) return;
+                if (e.target.closest('.level-select') || e.target.closest('.arrow-btn')) return;
+                const touch = e.touches[0];
+                startSortDrag(item, touch.clientY);
+            }, { passive: true });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!sortDrag.active) return;
+                e.preventDefault();
+                moveSortDrag(e.clientY);
+            });
+            document.addEventListener('mouseup', function() {
+                if (sortDrag.active) endSortDrag();
+            });
+
+            document.addEventListener('touchmove', function(e) {
+                if (!sortDrag.active) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                moveSortDrag(touch.clientY);
+            }, { passive: false });
+            document.addEventListener('touchend', function() {
+                if (sortDrag.active) endSortDrag();
+            });
+        }
+
+        function startSortDrag(item, clientY) {
+            const rect = item.getBoundingClientRect();
+            sortDrag.active = true;
+            sortDrag.sourceEl = item;
+            sortDrag.offsetY = clientY - rect.top;
+            sortDrag.container = item.parentElement;
+
+            // 幽灵
+            const ghost = item.cloneNode(true);
+            ghost.style.position = 'fixed';
+            ghost.style.width = rect.width + 'px';
+            ghost.style.height = rect.height + 'px';
+            ghost.style.left = rect.left + 'px';
+            ghost.style.top = rect.top + 'px';
+            ghost.style.zIndex = '9999';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.opacity = '0.85';
+            ghost.style.transform = 'scale(1.02)';
+            ghost.style.boxShadow = '0 8px 30px rgba(0,0,0,0.2)';
+            ghost.style.borderRadius = '8px';
+            ghost.style.background = 'var(--bg-card)';
+            ghost.style.border = '1px solid var(--primary)';
+            // 移除拖拽手柄
+            const handle = ghost.querySelector('.drag-handle-sort');
+            if (handle) handle.style.display = 'none';
+            document.body.appendChild(ghost);
+            sortDrag.ghost = ghost;
+
+            // 占位
+            const ph = document.createElement('div');
+            ph.className = 'sort-drag-placeholder';
+            ph.style.height = rect.height + 'px';
+            ph.style.margin = '2px 0';
+            sortDrag.placeholder = ph;
+            item.parentElement.insertBefore(ph, item);
+            item.style.display = 'none';
+        }
+
+        function moveSortDrag(clientY) {
+            if (!sortDrag.active || !sortDrag.ghost) return;
+            const ghost = sortDrag.ghost;
+            ghost.style.top = (clientY - sortDrag.offsetY) + 'px';
+
+            const container = sortDrag.container;
+            const items = container.querySelectorAll('.sort-item:not(.sort-drag-placeholder)');
+            let targetItem = null;
+            for (const item of items) {
+                const rect = item.getBoundingClientRect();
+                const mid = rect.top + rect.height / 2;
+                if (clientY < mid) {
+                    targetItem = item;
+                    break;
+                }
+            }
+            if (targetItem) {
+                container.insertBefore(sortDrag.placeholder, targetItem);
+            } else {
+                container.appendChild(sortDrag.placeholder);
+            }
+        }
+
+        function endSortDrag() {
+            if (!sortDrag.active) return;
+            const item = sortDrag.sourceEl;
+            const placeholder = sortDrag.placeholder;
+            const ghost = sortDrag.ghost;
+            const container = sortDrag.container;
+
+            if (placeholder && item) {
+                container.insertBefore(item, placeholder);
+                placeholder.remove();
+                item.style.display = '';
+            }
+            if (ghost) ghost.remove();
+
+            sortDrag.active = false;
+            sortDrag.sourceEl = null;
+            sortDrag.placeholder = null;
+            sortDrag.ghost = null;
+            sortDrag.container = null;
+            // 重新排序后更新UI顺序（但不保存，等待保存按钮）
+        }
+
+        function renderGroupSort() {
+            const container = $('groupSortList');
+            const paths = getCategoryPaths();
+            if (!paths.length) {
+                container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);">暂无分组</div>';
+                return;
+            }
+            const tree = buildTreeData(paths);
+            const flatList = [];
+            flattenTree(tree, '', 1, flatList);
+            const ordered = state.categoryOrder || paths;
+            flatList.sort((a, b) => {
+                const idxA = ordered.indexOf(a.path);
+                const idxB = ordered.indexOf(b.path);
+                if (idxA === -1 && idxB === -1) return a.path.localeCompare(b.path);
+                if (idxA === -1) return 1;
+                if (idxB === -1) return -1;
+                return idxA - idxB;
+            });
+
+            let html = '';
+            flatList.forEach(item => {
+                const indent = (item.level - 1) * 20;
+                const levelOptions = [1, 2, 3].map(l =>
+                    `<option value="${l}" ${l===item.level?'selected':''}>${l===1?'一级':l===2?'二级':'三级'}</option>`
+                ).join('');
+                html += `<div class="sort-item" data-path="${escapeHtml(item.path)}">
+                    <span class="drag-handle-sort">⠿</span>
+                    <span class="item-name" style="padding-left:${indent}px;">📂 ${escapeHtml(item.name)}</span>
+                    <select class="level-select" data-path="${escapeHtml(item.path)}">${levelOptions}</select>
+                    <button class="arrow-btn up-btn" data-path="${escapeHtml(item.path)}" title="上移">⬆</button>
+                    <button class="arrow-btn down-btn" data-path="${escapeHtml(item.path)}" title="下移">⬇</button>
+                </div>`;
+            });
+            container.innerHTML = html;
+
+            // 绑定箭头事件
+            container.querySelectorAll('.up-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const path = this.dataset.path;
+                    moveItemInList(path, -1);
+                });
+            });
+            container.querySelectorAll('.down-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const path = this.dataset.path;
+                    moveItemInList(path, 1);
+                });
+            });
+
+            // 层级变化
+            container.querySelectorAll('.level-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const path = this.dataset.path;
+                    const newLevel = parseInt(this.value);
+                    changeItemLevel(path, newLevel);
+                });
+            });
+
+            // 初始化拖拽
+            initSortDrag();
+        }
+
+        function moveItemInList(path, direction) {
+            const container = $('groupSortList');
+            const items = container.querySelectorAll('.sort-item');
+            const paths = Array.from(items).map(el => el.dataset.path);
+            const idx = paths.indexOf(path);
+            if (idx === -1) return;
+            const newIdx = idx + direction;
+            if (newIdx < 0 || newIdx >= paths.length) return;
+            // 交换DOM
+            const parent = container;
+            const item1 = items[idx];
+            const item2 = items[newIdx];
+            if (direction === -1) {
+                parent.insertBefore(item1, item2);
+            } else {
+                parent.insertBefore(item2, item1);
+            }
+        }
+
+        function changeItemLevel(path, newLevel) {
+            const container = $('groupSortList');
+            const itemEl = container.querySelector(`.sort-item[data-path="${escapeHtml(path)}"]`);
+            if (itemEl) {
+                const nameSpan = itemEl.querySelector('.item-name');
+                const indent = (newLevel - 1) * 20;
+                nameSpan.style.paddingLeft = indent + 'px';
+                const select = itemEl.querySelector('.level-select');
+                if (select) select.value = newLevel;
+                itemEl.dataset.newLevel = newLevel;
+            }
+        }
+
+        function saveGroupSort() {
+            const container = $('groupSortList');
+            const items = container.querySelectorAll('.sort-item');
+            const newOrder = [];
+            const levelMap = {};
+            items.forEach(el => {
+                const path = el.dataset.path;
+                const select = el.querySelector('.level-select');
+                const level = parseInt(select ? select.value : (el.dataset.newLevel || 1));
+                newOrder.push(path);
+                levelMap[path] = level;
+            });
+
+            const newPaths = [];
+            const stack = [];
+            newOrder.forEach((path, index) => {
+                const targetLevel = levelMap[path] || 1;
+                const parts = path.split('/');
+                const name = parts[parts.length - 1];
+                while (stack.length > targetLevel - 1) {
+                    stack.pop();
+                }
+                while (stack.length < targetLevel - 1) {
+                    stack.push('未命名');
+                }
+                const parentPath = stack.length > 0 ? stack.join('/') : '';
+                const newPath = parentPath ? parentPath + '/' + name : name;
+                newPaths.push(newPath);
+                stack.push(name);
+            });
+
+            const pathSet = new Set(newPaths);
+            if (pathSet.size !== newPaths.length) {
+                showToast('❌ 路径冲突，请检查层级设置');
+                return;
+            }
+
+            const pathMap = {};
+            newOrder.forEach((oldPath, idx) => {
+                pathMap[oldPath] = newPaths[idx];
+            });
+
+            state.allData.forEach(d => {
+                const oldCat = d.category;
+                if (oldCat && pathMap[oldCat]) {
+                    d.category = pathMap[oldCat];
+                } else if (oldCat) {
+                    for (const oldParent in pathMap) {
+                        if (oldCat.startsWith(oldParent + '/')) {
+                            const newParent = pathMap[oldParent];
+                            d.category = oldCat.replace(oldParent, newParent);
+                            break;
+                        }
+                    }
+                }
+            });
+
+            const finalOrder = newPaths;
+            state.categoryOrder = finalOrder;
+            localStorage.setItem('nav_categoryOrder', JSON.stringify(finalOrder));
+            saveLocalData(state.allData);
+            syncSettingsToCloud();
+
+            if (state.isOnline) {
+                const client = getClient();
+                const updates = state.allData.map(d => client.from('nav_links').update({ category: d.category }).eq('id', d
+                    .id));
+                Promise.all(updates).then(() => {
+                    showToast('✅ 分组排序已保存并同步');
+                }).catch(() => {
+                    showToast('⚠️ 已保存本地，云端同步失败');
+                });
+            } else {
+                showToast('✅ 分组排序已保存');
+            }
+
+            if (state.defaultCategory && pathMap[state.defaultCategory]) {
+                state.defaultCategory = pathMap[state.defaultCategory];
+                localStorage.setItem('nav_defaultCategory', state.defaultCategory);
+                syncSettingsToCloud();
+            } else if (state.defaultCategory) {
+                for (const oldParent in pathMap) {
+                    if (state.defaultCategory.startsWith(oldParent + '/')) {
+                        state.defaultCategory = state.defaultCategory.replace(oldParent, pathMap[oldParent]);
+                        localStorage.setItem('nav_defaultCategory', state.defaultCategory);
+                        syncSettingsToCloud();
+                        break;
+                    }
+                }
+            }
+
+            renderAll();
+            closeModal('groupSortModal');
+        }
+
+        function openGroupSortModal() {
+            renderGroupSort();
+            openModal('groupSortModal');
+            const saveBtn = $('btnSaveGroupSort');
+            saveBtn.removeEventListener('click', saveGroupSort);
+            saveBtn.addEventListener('click', saveGroupSort);
         }
 
         // ==================== 首页树形渲染（侧栏） ====================
@@ -1139,7 +1704,6 @@
             html += renderNode(tree, '');
             tabsEl.innerHTML = html;
 
-            // 绑定事件
             tabsEl.querySelectorAll('.tab-node').forEach(node => {
                 node.addEventListener('click', function(e) {
                     if (e.target.closest('.toggle-icon')) return;
@@ -1159,16 +1723,19 @@
                         if (window.innerWidth <= 768) toggleSidebar(false);
                     }
                 });
-                // 右键菜单 - 设为默认分组
                 node.addEventListener('contextmenu', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const path = this.dataset.path;
                     if (path && path !== '全部') {
                         state.ctxCategoryPath = path;
+                        state.ctxCategoryType = 'category';
                         const menu = $('ctxMenu');
                         menu.querySelectorAll('.ctx-item').forEach(item => {
-                            if (item.dataset.action === 'setDefaultCategory') {
+                            const action = item.dataset.action;
+                            if (action === 'renameCategory' || action === 'groupSortMode' ||
+                                action === 'setDefaultCategory' || action === 'delete' ||
+                                action === 'sortMode' || action === 'multiSelectMode') {
                                 item.style.display = 'flex';
                             } else {
                                 item.style.display = 'none';
@@ -1201,169 +1768,8 @@
             });
         }
 
-        // ==================== 设置中的分组管理 ====================
-        function renderCategoryManage() {
-            const container = $('categoryManage');
-            const paths = getCategoryPaths();
-            if (!paths.length) {
-                container.innerHTML = '<div style="color:var(--text-secondary);padding:12px 0;">暂无分组，请添加导航或导入书签。</div>';
-                return;
-            }
-            const tree = buildCategoryTree(paths);
-
-            function renderNode(node, path) {
-                const keys = Object.keys(node);
-                if (!keys.length) return '';
-                let html = '<ul>';
-                const ordered = state.categoryOrder || [];
-                const sortedKeys = keys.sort((a, b) => {
-                    const fullA = path ? path + '/' + a : a;
-                    const fullB = path ? path + '/' + b : b;
-                    const idxA = ordered.indexOf(fullA);
-                    const idxB = ordered.indexOf(fullB);
-                    if (idxA === -1 && idxB === -1) return a.localeCompare(b);
-                    if (idxA === -1) return 1;
-                    if (idxB === -1) return -1;
-                    return idxA - idxB;
-                });
-                sortedKeys.forEach(key => {
-                    const fullPath = path ? path + '/' + key : key;
-                    const hasChildren = Object.keys(node[key]).length > 0;
-                    const count = countNodeLinks(fullPath);
-                    const isDefault = (state.defaultCategory === fullPath);
-                    const folderIcon = hasChildren ? '📂' : '📄';
-                    html += `<li>
-                        <div class="cat-item" data-path="${escapeHtml(fullPath)}">
-                            ${hasChildren ? `<button class="cat-toggle" data-path="${escapeHtml(fullPath)}" title="折叠/展开">▼</button>` : `<span style="width:22px;"></span>`}
-                            <span class="cat-name" data-path="${escapeHtml(fullPath)}">
-                                <span class="folder-icon">${folderIcon}</span>
-                                ${escapeHtml(key)}
-                                <span class="cat-count">${count}</span>
-                                ${isDefault ? '⭐' : ''}
-                            </span>
-                            <div class="cat-actions">
-                                <input type="radio" name="defaultCatRadio" value="${escapeHtml(fullPath)}" ${isDefault?'checked':''} class="default-radio" data-path="${escapeHtml(fullPath)}" title="设为默认">
-                                <button class="cat-move-up" data-path="${escapeHtml(fullPath)}" title="上移">⬆</button>
-                                <button class="cat-move-down" data-path="${escapeHtml(fullPath)}" title="下移">⬇</button>
-                            </div>
-                        </div>
-                        ${hasChildren ? renderNode(node[key], fullPath) : ''}
-                    </li>`;
-                });
-                html += '</ul>';
-                return html;
-            }
-
-            container.innerHTML = renderNode(tree, '');
-        }
-
-        // 全局事件委托
-        document.addEventListener('click', function(e) {
-            // 设置中的折叠
-            const toggle = e.target.closest('.cat-toggle');
-            if (toggle) {
-                const li = toggle.closest('li');
-                const childUl = li ? li.querySelector('ul') : null;
-                if (childUl) {
-                    if (childUl.style.display === 'none') {
-                        childUl.style.display = '';
-                        toggle.textContent = '▼';
-                    } else {
-                        childUl.style.display = 'none';
-                        toggle.textContent = '▶';
-                    }
-                }
-                e.preventDefault();
-                return;
-            }
-
-            // 设置默认分类（所有节点都可以通过单选框或点击名称设置）
-            const radio = e.target.closest('.default-radio');
-            if (radio && radio.checked) {
-                const path = radio.dataset.path || radio.value;
-                if (path) setDefaultCategory(path);
-                return;
-            }
-
-            const catName = e.target.closest('.cat-name');
-            if (catName && !e.target.closest('.cat-actions')) {
-                const li = catName.closest('li');
-                if (li) {
-                    const path = catName.closest('.cat-item')?.dataset.path;
-                    if (path) {
-                        const radioInLi = li.querySelector('.default-radio');
-                        if (radioInLi) {
-                            radioInLi.checked = true;
-                            setDefaultCategory(path);
-                        }
-                    }
-                }
-                return;
-            }
-
-            const moveBtn = e.target.closest('.cat-move-up, .cat-move-down');
-            if (moveBtn) {
-                const path = moveBtn.dataset.path;
-                if (!path) return;
-                const direction = moveBtn.classList.contains('cat-move-up') ? -1 : 1;
-                moveCategory(path, direction);
-                e.preventDefault();
-                return;
-            }
-
-            // 多选模式点击卡片
-            if (state.multiSelectMode) {
-                const card = e.target.closest('.card');
-                if (card && !e.target.closest('.sort-quick-actions') && !e.target.closest('.drag-handle-badge')) {
-                    const wrapper = card.closest('.swipe-wrapper');
-                    if (wrapper) {
-                        const id = wrapper.dataset.id;
-                        if (id) toggleSelect(id);
-                        e.preventDefault();
-                    }
-                }
-            }
-
-            // 排序模式快速移动
-            if (state.sortMode) {
-                const moveFirst = e.target.closest('.sort-move-first');
-                if (moveFirst) { const id = moveFirst.dataset.id; if (id) moveItemTo(id, 'first');
-                    e.preventDefault(); return; }
-                const moveLast = e.target.closest('.sort-move-last');
-                if (moveLast) { const id = moveLast.dataset.id; if (id) moveItemTo(id, 'last');
-                    e.preventDefault(); return; }
-            }
-        });
-
-        // 右键菜单的全局事件处理（包括“设为默认分组”）
-        document.addEventListener('click', function(e) {
-            const ctxItem = e.target.closest('.ctx-item');
-            if (!ctxItem) return;
-            const action = ctxItem.dataset.action;
-            if (action === 'setDefaultCategory') {
-                const path = state.ctxCategoryPath;
-                if (path) {
-                    setDefaultCategory(path);
-                    state.ctxCategoryPath = null;
-                }
-                hideCtxMenu();
-                e.preventDefault();
-            }
-        });
-
-        // 隐藏右键菜单
-        function hideCtxMenu() {
-            const menu = $('ctxMenu');
-            menu.classList.remove('show');
-            menu.querySelectorAll('.ctx-item').forEach(item => {
-                item.style.display = 'flex';
-            });
-        }
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.ctx-menu')) hideCtxMenu();
-        });
-
-        window.setDefaultCategory = function(path) {
+        // ==================== 设置默认分组 ====================
+        function setDefaultCategory(path) {
             if (state.categories.includes(path) || path === '全部') {
                 state.defaultCategory = path;
                 localStorage.setItem('nav_defaultCategory', path);
@@ -1371,100 +1777,101 @@
                     state.currentCategory = path;
                     localStorage.setItem('nav_currentCategory', path);
                 }
+                syncSettingsToCloud();
                 renderAll();
-                saveSettingsToCloud();
                 showToast(`✅ 默认分组设为「${path}」`);
-                renderCategoryManage();
             }
-        };
-
-        window.moveCategory = function(path, direction) {
-            const allPaths = getCategoryPaths();
-            if (!allPaths.includes(path)) return;
-            const ordered = state.categoryOrder || allPaths.slice();
-            const fullOrder = [...ordered.filter(p => allPaths.includes(p)), ...allPaths.filter(p => !ordered.includes(p))];
-            const idx = fullOrder.indexOf(path);
-            const newIdx = idx + direction;
-            if (newIdx < 0 || newIdx >= fullOrder.length) return;
-            [fullOrder[idx], fullOrder[newIdx]] = [fullOrder[newIdx], fullOrder[idx]];
-            state.categoryOrder = fullOrder;
-            localStorage.setItem('nav_categoryOrder', JSON.stringify(fullOrder));
-            renderCategoryManage();
-            renderAll();
-            saveSettingsToCloud();
-            showToast('✅ 分类顺序已更新');
-        };
-
-        // ==================== 添加/编辑 ====================
-        $('btnAdd').onclick = () => {
-            $('editId').value = '';
-            $('addModalTitle').textContent = '➕ 添加导航';
-            $('addModalSubtitle').textContent = '新增记录将立即同步。';
-            $('addName').value = '';
-            $('addUrl').value = '';
-            $('addDesc').value = '';
-            $('addCategoryInput').value = '';
-            updateCategorySuggestions();
-            openModal('addModal');
-        };
-        function openEditModal(item) {
-            $('editId').value = item.id;
-            $('addModalTitle').textContent = '✏️ 编辑导航';
-            $('addModalSubtitle').textContent = '修改后自动同步。';
-            $('addName').value = item.name || '';
-            $('addUrl').value = item.url || '';
-            $('addDesc').value = item.description || '';
-            $('addCategoryInput').value = item.category || '';
-            updateCategorySuggestions();
-            openModal('addModal');
         }
-        $('btnSaveAdd').onclick = async () => {
-            const name = $('addName').value.trim(),
-                url = $('addUrl').value.trim();
-            const category = $('addCategoryInput').value.trim() || '未分类';
-            const description = $('addDesc').value.trim();
-            const editId = $('editId').value;
-            if (!name || !url) { showToast('❌ 名称和网址必填'); return }
-            if (editId) {
-                if (state.isOnline && !String(editId).startsWith('local_')) {
-                    try { const { error } = await getClient().from('nav_links').update({ name, url, category,
-                            description }).eq('id', editId); if (error) throw error;
-                        showToast('✅ 已更新到云端'); } catch (err) { handleDbError(err, '更新'); return }
-                }
-                let local = getLocalData();
-                const idx = local.findIndex(i => String(i.id) === String(editId));
-                if (idx >= 0) { local[idx] = { ...local[idx], name, url, category, description };
-                    saveLocalData(local) }
-                state.allData = state.isOnline ? state.allData.map(i => String(i.id) === String(editId) ? { ...i,
-                    name, url, category, description } : i) : local;
-                closeModal('addModal');
-                renderAll();
-                showToast('✅ 已保存');
-            } else {
-                const newItem = { name, url, category, description, is_active: true };
-                if (state.isOnline) {
-                    try { const { error } = await getClient().from('nav_links').insert(newItem); if (error) throw error;
-                        showToast('✅ 已同步云端');
-                        closeModal('addModal');
-                        loadData() } catch (err) { handleDbError(err, '添加') }
-                } else {
-                    const local = getLocalData();
-                    newItem.id = 'local_' + Date.now();
-                    local.push(newItem);
-                    saveLocalData(local);
-                    state.allData = local;
-                    closeModal('addModal');
-                    renderAll();
-                    showToast('✅ 已保存到本地');
-                }
-            }
-        };
 
-        // ==================== 右键菜单（卡片） ====================
+        // ==================== 重命名分类 ====================
+        function renameCategory(oldPath, newName) {
+            if (!oldPath || !newName || newName.trim() === '') return false;
+            const parts = oldPath.split('/');
+            if (parts.length === 0) return false;
+            const parentPath = parts.slice(0, -1).join('/');
+            const newPath = parentPath ? parentPath + '/' + newName.trim() : newName.trim();
+            if (newPath === oldPath) { showToast('新名称与旧名称相同'); return false; }
+            let updated = 0;
+            state.allData.forEach(d => {
+                if (d.category === oldPath) {
+                    d.category = newPath;
+                    updated++;
+                } else if (d.category && d.category.startsWith(oldPath + '/')) {
+                    d.category = d.category.replace(oldPath, newPath);
+                    updated++;
+                }
+            });
+            if (updated === 0) { showToast('没有链接需要更新'); return false; }
+            saveLocalData(state.allData);
+
+            if (state.categoryOrder) {
+                const idx = state.categoryOrder.indexOf(oldPath);
+                if (idx !== -1) {
+                    state.categoryOrder[idx] = newPath;
+                    localStorage.setItem('nav_categoryOrder', JSON.stringify(state.categoryOrder));
+                } else {
+                    state.categoryOrder.push(newPath);
+                    localStorage.setItem('nav_categoryOrder', JSON.stringify(state.categoryOrder));
+                }
+                syncSettingsToCloud();
+            }
+
+            if (state.isOnline) {
+                const client = getClient();
+                const updates = state.allData.filter(d => d.category === newPath || (d.category && d.category.startsWith(
+                    newPath + '/')))
+                    .map(d => client.from('nav_links').update({ category: d.category }).eq('id', d.id));
+                Promise.all(updates).then(() => showToast(`✅ 重命名成功，更新 ${updated} 条链接`))
+                    .catch(() => showToast('⚠️ 已保存本地，云端同步失败'));
+            } else {
+                showToast(`✅ 重命名成功，更新 ${updated} 条链接`);
+            }
+            if (state.defaultCategory === oldPath) {
+                state.defaultCategory = newPath;
+                localStorage.setItem('nav_defaultCategory', newPath);
+                syncSettingsToCloud();
+            } else if (state.defaultCategory && state.defaultCategory.startsWith(oldPath + '/')) {
+                state.defaultCategory = state.defaultCategory.replace(oldPath, newPath);
+                localStorage.setItem('nav_defaultCategory', state.defaultCategory);
+                syncSettingsToCloud();
+            }
+            renderAll();
+            return true;
+        }
+
+        // ==================== 右键菜单 ====================
         const ctxMenu = $('ctxMenu');
-        function showCtxMenu(x, y, item) {
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.ctx-menu')) {
+                hideCtxMenu();
+            }
+        });
+
+        function showCtxMenu(x, y, item, type) {
             state.ctxItem = item;
-            ctxMenu.querySelectorAll('.ctx-item').forEach(el => el.style.display = 'flex');
+            state.ctxCategoryType = type;
+            ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
+                const action = el.dataset.action;
+                if (type === 'card') {
+                    if (action === 'edit' || action === 'move' || action === 'sortMode' || action ===
+                        'multiSelectMode' || action === 'delete') {
+                        el.style.display = 'flex';
+                    } else {
+                        el.style.display = 'none';
+                    }
+                } else if (type === 'category') {
+                    if (action === 'renameCategory' || action === 'groupSortMode' ||
+                        action === 'setDefaultCategory' || action === 'delete' ||
+                        action === 'sortMode' || action === 'multiSelectMode') {
+                        el.style.display = 'flex';
+                    } else {
+                        el.style.display = 'none';
+                    }
+                } else {
+                    el.style.display = 'flex';
+                }
+            });
             ctxMenu.classList.add('show');
             const mw = ctxMenu.offsetWidth,
                 mh = ctxMenu.offsetHeight,
@@ -1474,74 +1881,157 @@
             ctxMenu.style.top = Math.min(y, wh - mh - 10) + 'px';
         }
 
-        // 桌面端卡片右键
-        document.addEventListener('contextmenu', e => {
-            if (state.sortMode || state.multiSelectMode) { e.preventDefault(); return; }
+        function hideCtxMenu() {
+            ctxMenu.classList.remove('show');
+            state.ctxCategoryPath = null;
+            state.ctxCategoryType = null;
+            state.ctxItem = null;
+            document.querySelectorAll('.card[data-longpress]').forEach(card => card.removeAttribute('data-longpress'));
+        }
+
+        // 桌面端右键
+        document.addEventListener('contextmenu', function(e) {
             const card = e.target.closest('.card');
-            if (card) {
+            if (card && card.hasAttribute('data-longpress')) {
                 e.preventDefault();
-                const item = state.allData.find(i => String(i.id) === String(card.dataset.id));
+                card.removeAttribute('data-longpress');
+                return;
+            }
+            if (state.sortMode || state.multiSelectMode) { e.preventDefault(); return; }
+            const targetCard = e.target.closest('.card');
+            if (targetCard) {
+                e.preventDefault();
+                const item = state.allData.find(i => String(i.id) === String(targetCard.dataset.id));
                 if (item) {
-                    ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
-                        if (el.dataset.action === 'setDefaultCategory') {
-                            el.style.display = 'none';
-                        } else {
-                            el.style.display = 'flex';
-                        }
-                    });
-                    showCtxMenu(e.clientX, e.clientY, item);
+                    showCtxMenu(e.clientX, e.clientY, item, 'card');
                 }
             } else {
-                hideCtxMenu();
+                if (!e.target.closest('.tab-node')) {
+                    hideCtxMenu();
+                }
+            }
+        }, { passive: false });
+
+        // 编辑按钮点击（打开卡片右键菜单）
+        document.addEventListener('click', function(e) {
+            const editBtn = e.target.closest('.edit-btn');
+            if (editBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const card = editBtn.closest('.card');
+                if (card) {
+                    const rect = card.getBoundingClientRect();
+                    const item = state.allData.find(i => String(i.id) === String(card.dataset.id));
+                    if (item) {
+                        showCtxMenu(rect.left + rect.width / 2, rect.top + rect.height / 2, item, 'card');
+                    }
+                }
             }
         });
 
-        // 卡片右键菜单项处理
-        ctxMenu.querySelectorAll('.ctx-item:not([data-action="setDefaultCategory"])').forEach(el => {
+        // 右键菜单项处理
+        ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
             el.onclick = () => {
-                const action = el.dataset.action,
-                    item = state.ctxItem;
+                const action = el.dataset.action;
+                const item = state.ctxItem;
+                const path = state.ctxCategoryPath;
+                const type = state.ctxCategoryType;
+
                 hideCtxMenu();
-                if (action === 'edit' && item) openEditModal(item);
-                else if (action === 'delete' && item) deleteLink(item.id, item.name);
-                else if (action === 'move' && item) openMoveModal(item);
-                else if (action === 'sortMode') {
-                    state.sortMode = !state.sortMode;
-                    localStorage.setItem('nav_sortMode', String(state.sortMode));
-                    const toggle = $('sortModeToggle');
-                    if (toggle) toggle.checked = state.sortMode;
-                    if (state.sortMode) {
-                        if (state.viewMode !== 'list') { state.viewMode = 'list';
-                            localStorage.setItem('viewMode', 'list');
-                            applyView(); }
-                        if (state.multiSelectMode) { state.multiSelectMode = false;
-                            localStorage.setItem('nav_multiSelectMode', 'false');
-                            const mt = $('multiSelectToggle'); if (mt) mt.checked = false;
-                            clearSelection(); }
+
+                if (type === 'card') {
+                    if (action === 'edit' && item) openEditModal(item);
+                    else if (action === 'delete' && item) deleteLink(item.id, item.name);
+                    else if (action === 'move' && item) openMoveModal(item);
+                    else if (action === 'sortMode') {
+                        state.sortMode = !state.sortMode;
+                        localStorage.setItem('nav_sortMode', String(state.sortMode));
+                        if (state.sortMode) {
+                            if (state.multiSelectMode) { state.multiSelectMode = false;
+                                localStorage.setItem('nav_multiSelectMode', 'false');
+                                clearSelection(); }
+                            if (state.viewMode !== 'list') { state.viewMode = 'list';
+                                localStorage.setItem('viewMode', 'list');
+                                applyView(); }
+                        }
+                        renderAll();
+                        showToast(state.sortMode ? '↕️ 排序模式已开启' : '✅ 排序模式已关闭');
+                    } else if (action === 'multiSelectMode') {
+                        state.multiSelectMode = !state.multiSelectMode;
+                        localStorage.setItem('nav_multiSelectMode', String(state.multiSelectMode));
+                        if (state.multiSelectMode) {
+                            if (state.sortMode) { state.sortMode = false;
+                                localStorage.setItem('nav_sortMode', 'false');
+                                clearSelection(); }
+                            if (state.viewMode !== 'list') { state.viewMode = 'list';
+                                localStorage.setItem('viewMode', 'list');
+                                applyView(); }
+                            clearSelection();
+                        } else { clearSelection(); }
+                        renderAll();
+                        showToast(state.multiSelectMode ? '☑️ 多选模式已开启' : '✅ 多选模式已关闭');
                     }
-                    renderAll();
-                    showToast(state.sortMode ? '↕️ 排序模式已开启' : '✅ 排序模式已关闭');
-                } else if (action === 'multiSelectMode') {
-                    state.multiSelectMode = !state.multiSelectMode;
-                    localStorage.setItem('nav_multiSelectMode', String(state.multiSelectMode));
-                    const toggle = $('multiSelectToggle');
-                    if (toggle) toggle.checked = state.multiSelectMode;
-                    if (state.multiSelectMode) {
-                        if (state.viewMode !== 'list') { state.viewMode = 'list';
-                            localStorage.setItem('viewMode', 'list');
-                            applyView(); }
-                        if (state.sortMode) { state.sortMode = false;
-                            localStorage.setItem('nav_sortMode', 'false');
-                            const st = $('sortModeToggle'); if (st) st.checked = false; }
-                        clearSelection();
-                    } else { clearSelection(); }
-                    renderAll();
-                    showToast(state.multiSelectMode ? '☑️ 多选模式已开启' : '✅ 多选模式已关闭');
+                } else if (type === 'category' && path) {
+                    if (action === 'renameCategory') {
+                        const parts = path.split('/');
+                        const oldName = parts[parts.length - 1];
+                        const newName = prompt('请输入新的最后一级名称：', oldName);
+                        if (newName !== null && newName.trim() !== '') {
+                            renameCategory(path, newName.trim());
+                        }
+                    } else if (action === 'groupSortMode') {
+                        openGroupSortModal();
+                    } else if (action === 'setDefaultCategory') {
+                        setDefaultCategory(path);
+                    } else if (action === 'delete') {
+                        if (confirm(`确定删除分类「${path}」及其所有子分类下的链接吗？`)) {
+                            const toDelete = state.allData.filter(d => d.category === path || (d.category && d
+                                .category.startsWith(path + '/')));
+                            if (toDelete.length === 0) { showToast('该分类下没有链接'); return; }
+                            const ids = toDelete.map(d => d.id);
+                            if (state.isOnline) {
+                                const client = getClient();
+                                const delPromises = ids.map(id => client.from('nav_links').delete().eq('id', id));
+                                Promise.all(delPromises).then(() => {
+                                    state.allData = state.allData.filter(d => !ids.includes(d.id));
+                                    saveLocalData(state.allData);
+                                    if (state.categoryOrder) {
+                                        state.categoryOrder = state.categoryOrder.filter(p => p !== path && !p
+                                            .startsWith(path + '/'));
+                                        localStorage.setItem('nav_categoryOrder', JSON.stringify(state
+                                            .categoryOrder));
+                                        syncSettingsToCloud();
+                                    }
+                                    renderAll();
+                                    showToast(`✅ 已删除 ${toDelete.length} 条链接`);
+                                }).catch(err => handleDbError(err, '删除分类'));
+                            } else {
+                                state.allData = state.allData.filter(d => !ids.includes(d.id));
+                                saveLocalData(state.allData);
+                                if (state.categoryOrder) {
+                                    state.categoryOrder = state.categoryOrder.filter(p => p !== path && !p
+                                        .startsWith(path + '/'));
+                                    localStorage.setItem('nav_categoryOrder', JSON.stringify(state
+                                        .categoryOrder));
+                                    syncSettingsToCloud();
+                                }
+                                renderAll();
+                                showToast(`✅ 已删除 ${toDelete.length} 条链接`);
+                            }
+                            if (state.defaultCategory === path || (state.defaultCategory && state.defaultCategory
+                                    .startsWith(path + '/'))) {
+                                state.defaultCategory = null;
+                                localStorage.removeItem('nav_defaultCategory');
+                                syncSettingsToCloud();
+                            }
+                            renderAll();
+                        }
+                    }
                 }
             };
         });
 
-        // ==================== 移动端长按菜单（替代左滑） ====================
+        // ==================== 移动端长按 ====================
         let longPressTimer = null;
         let longPressTriggered = false;
 
@@ -1550,7 +2040,7 @@
                 if (state.sortMode || state.multiSelectMode) return;
                 const card = e.target.closest('.card');
                 if (!card) return;
-                // 获取对应的 item
+                card.removeAttribute('data-longpress');
                 const id = card.dataset.id;
                 const item = state.allData.find(i => String(i.id) === String(id));
                 if (!item) return;
@@ -1558,27 +2048,20 @@
                 longPressTriggered = false;
                 longPressTimer = setTimeout(() => {
                     longPressTriggered = true;
-                    // 获取触摸位置
+                    card.setAttribute('data-longpress', 'true');
                     const touch = e.touches[0];
-                    // 显示菜单
-                    ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
-                        if (el.dataset.action === 'setDefaultCategory') {
-                            el.style.display = 'none';
-                        } else {
-                            el.style.display = 'flex';
-                        }
-                    });
-                    showCtxMenu(touch.clientX, touch.clientY, item);
-                    // 阻止后续事件
+                    showCtxMenu(touch.clientX, touch.clientY, item, 'card');
                     e.preventDefault();
                 }, 500);
-            }, { passive: true });
+            }, { passive: false });
 
             contentEl.addEventListener('touchmove', function(e) {
                 if (longPressTimer) {
                     clearTimeout(longPressTimer);
                     longPressTimer = null;
                 }
+                const card = e.target.closest('.card');
+                if (card) card.removeAttribute('data-longpress');
             }, { passive: true });
 
             contentEl.addEventListener('touchend', function(e) {
@@ -1586,22 +2069,28 @@
                     clearTimeout(longPressTimer);
                     longPressTimer = null;
                 }
-                // 如果长按已触发，阻止点击事件
+                const card = e.target.closest('.card');
+                if (card) card.removeAttribute('data-longpress');
                 if (longPressTriggered) {
                     e.preventDefault();
                 }
                 longPressTriggered = false;
-            }, { passive: true });
+            }, { passive: false });
 
-            // 点击其他区域关闭菜单
             document.addEventListener('touchstart', function(e) {
                 if (!e.target.closest('.ctx-menu') && !e.target.closest('.card')) {
                     hideCtxMenu();
                 }
             }, { passive: true });
+
+            document.addEventListener('contextmenu', function(e) {
+                if (e.target.closest('.card') || e.target.closest('.tab-node')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
         }
 
-        // ==================== 拖拽排序 ====================
+        // ==================== 拖拽排序（链接） ====================
         let drag = {
             active: false,
             sourceWrapper: null,
@@ -1643,6 +2132,7 @@
         }
 
         function startDrag(wrapper, clientX, clientY, isTouch) {
+            document.querySelectorAll('.card[data-longpress]').forEach(c => c.removeAttribute('data-longpress'));
             resetAllSwipes();
             const rect = wrapper.getBoundingClientRect();
             drag.active = true;
@@ -1838,7 +2328,7 @@
             }
         }
 
-        // ==================== 移动分组 ====================
+        // ==================== 移动分组（卡片） ====================
         function openMoveModal(item) {
             const isBatch = state.multiSelectMode && state.selectedIds.length > 0;
             if (isBatch) { $('moveItemId').value = '';
@@ -1872,7 +2362,7 @@
             if (!state.isOnline) showToast(`✅ 已移动到「${newCat}」`);
         };
 
-        // ==================== 删除 ====================
+        // ==================== 删除（卡片） ====================
         async function deleteLink(id, name) {
             if (!confirm(`确定删除「${name}」吗？`)) return;
             resetAllSwipes();
@@ -1915,57 +2405,100 @@
                     opts[parseInt(c.dataset.i)].action() } });
             openModal('choiceModal');
         }
-        $('btnExportJson').onclick = () => { if (!state.allData.length) { showToast('⚠️ 无数据'); return }
-            showChoice('导出JSON', [{ icon: '📁', title: '导出文件', desc: '下载.json', action: () => { downloadFile(
+
+        // 导出 JSON
+        $('btnExportJson').onclick = function() {
+            if (!state.allData.length) { showToast('⚠️ 无数据'); return; }
+            showChoice('导出JSON', [
+                { icon: '📁', title: '导出文件', desc: '下载.json', action: () => { downloadFile(
                         new Blob([JSON.stringify(state.allData, null, 2)], { type: 'application/json' }),
                         `nav_${dateStr()}.json`);
-                    showToast('✅ 已下载') } }, { icon: '📋', title: '复制到剪贴板', desc: '一键复制', action: () => { navigator
-                            .clipboard.writeText(JSON.stringify(state.allData, null, 2)).then(() => showToast(
-                            '✅ 已复制')).catch(() => { $('textExportArea').value = JSON.stringify(state
-                                .allData, null, 2);
-                            openModal('textExportModal') }) } }, { icon: '📝', title: '显示文本', desc: '手动复制',
-                    action: () => { $('textExportArea').value = JSON.stringify(state.allData, null, 2);
-                        openModal('textExportModal') } }]) };
-        $('btnCopyTextExport').onclick = () => { const a = $('textExportArea');
+                    showToast('✅ 已下载') } },
+                { icon: '📋', title: '复制到剪贴板', desc: '一键复制', action: () => { navigator.clipboard.writeText(JSON
+                            .stringify(state.allData, null, 2)).then(() => showToast('✅ 已复制'))
+                        .catch(() => { $('textExportArea').value = JSON.stringify(state.allData, null, 2);
+                            openModal('textExportModal') }) } },
+                { icon: '📝', title: '显示文本', desc: '手动复制', action: () => { $('textExportArea').value = JSON
+                            .stringify(state.allData, null, 2);
+                        openModal('textExportModal') } }
+            ]);
+        };
+
+        $('btnCopyTextExport').onclick = function() {
+            const a = $('textExportArea');
             a.select();
-            navigator.clipboard.writeText(a.value).then(() => showToast('✅ 已复制')).catch(() => { document
-                    .execCommand('copy');
-                showToast('✅ 已复制') }) };
-        $('btnImportJson').onclick = () => showChoice('导入JSON', [{ icon: '📁', title: '从文件', desc: '选择.json',
-                action: () => $('fileInputJson').click() }, { icon: '📋', title: '从文本', desc: '粘贴JSON',
-                action: () => { $('textImportArea').value = '';
-                    openModal('textImportModal') } }]);
-        $('fileInputJson').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const n =
-                    await batchInsert(JSON.parse(await f.text()));
+            navigator.clipboard.writeText(a.value).then(() => showToast('✅ 已复制'))
+                .catch(() => { document.execCommand('copy');
+                    showToast('✅ 已复制') });
+        };
+
+        // 导入 JSON
+        $('btnImportJson').onclick = function() {
+            showChoice('导入JSON', [
+                { icon: '📁', title: '从文件', desc: '选择.json', action: () => $('fileInputJson').click() },
+                { icon: '📋', title: '从文本', desc: '粘贴JSON', action: () => { $('textImportArea').value = '';
+                        openModal('textImportModal') } }
+            ]);
+        };
+
+        $('fileInputJson').onchange = async function(e) {
+            const f = e.target.files[0];
+            if (!f) return;
+            try {
+                const n = await batchInsert(JSON.parse(await f.text()));
                 showToast(`✅ 导入${n}条`);
                 closeModal('settingsModal');
-                loadData() } catch (err) { handleDbError(err, '导入') }
-            e.target.value = '' };
-        $('btnConfirmTextImport').onclick = async () => { const t = $('textImportArea').value.trim(); if (!t) { showToast(
-                    '❌ 请粘贴内容'); return } try { const n = await batchInsert(JSON.parse(t));
+                loadData();
+            } catch (err) { handleDbError(err, '导入'); }
+            e.target.value = '';
+        };
+
+        $('btnConfirmTextImport').onclick = async function() {
+            const t = $('textImportArea').value.trim();
+            if (!t) { showToast('❌ 请粘贴内容'); return; }
+            try {
+                const n = await batchInsert(JSON.parse(t));
                 showToast(`✅ 导入${n}条`);
                 closeModal('textImportModal');
                 closeModal('settingsModal');
-                loadData() } catch (err) { showToast('❌ ' + err.message) } };
-        $('btnExportExcel').onclick = () => { if (!state.allData.length || typeof XLSX === 'undefined') { showToast(
-                    '⚠️ 无数据或Excel库未就绪'); return } const ws = XLSX.utils.json_to_sheet(state.allData.map(d => ({ name: d
-                        .name, url: d.url, category: d.category || '', description: d.description || '' })));
+                loadData();
+            } catch (err) { showToast('❌ ' + err.message); }
+        };
+
+        // 导出 Excel
+        $('btnExportExcel').onclick = function() {
+            if (!state.allData.length || typeof XLSX === 'undefined') {
+                showToast('⚠️ 无数据或Excel库未就绪');
+                return;
+            }
+            const ws = XLSX.utils.json_to_sheet(state.allData.map(d => ({ name: d.name, url: d.url, category: d.category ||
+                    '', description: d.description || '' })));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, '导航');
             XLSX.writeFile(wb, `nav_${dateStr()}.xlsx`);
-            showToast('✅ Excel已导出') };
-        $('btnImportExcel').onclick = () => $('fileInputExcel').click();
-        $('fileInputExcel').onchange = async e => { const f = e.target.files[0]; if (!f) return; if (typeof XLSX ===
-                'undefined') { showToast('❌ Excel库未就绪'); return } try { const wb = XLSX.read(await f.arrayBuffer(),
-                    { type: 'array' });
+            showToast('✅ Excel已导出');
+        };
+
+        // 导入 Excel
+        $('btnImportExcel').onclick = function() { $('fileInputExcel').click(); };
+
+        $('fileInputExcel').onchange = async function(e) {
+            const f = e.target.files[0];
+            if (!f) return;
+            if (typeof XLSX === 'undefined') { showToast('❌ Excel库未就绪'); return; }
+            try {
+                const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
                 const n = await batchInsert(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
                 showToast(`✅ 导入${n}条`);
                 closeModal('settingsModal');
-                loadData() } catch (err) { handleDbError(err, '导入') }
-            e.target.value = '' };
+                loadData();
+            } catch (err) { handleDbError(err, '导入'); }
+            e.target.value = '';
+        };
 
-        // ==================== 书签→JSON ====================
-        $('btnBookmarkToJson').onclick = () => $('fileInputBookmark').click();
+        // 书签→JSON
+        $('btnBookmarkToJson').onclick = function() { $('fileInputBookmark').click(); };
+
         $('fileInputBookmark').onchange = async function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -1984,7 +2517,7 @@
                         showToast('✅ 已导出');
                         closeModal('choiceModal') } }
                 ]);
-            } catch (err) { showToast('❌ 解析失败: ' + err.message) }
+            } catch (err) { showToast('❌ 解析失败: ' + err.message); }
             e.target.value = '';
         };
 
@@ -2033,8 +2566,10 @@
                     .trim(), category: String(i.category || '未分类').trim(), description: String(i.description || '')
                     .trim(), is_active: true }));
             if (!valid.length) throw new Error('无有效记录');
-            if (state.isOnline) { try { const { error } = await getClient().from('nav_links').insert(valid); if (error)
-                        throw error } catch (e) { throw e } }
+            if (state.isOnline) {
+                try { const { error } = await getClient().from('nav_links').insert(valid); if (error) throw error; } catch (
+                    e) { throw e; }
+            }
             const local = getLocalData();
             valid.forEach(i => { i.id = i.id || ('local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
                 local.push(i) });
@@ -2042,44 +2577,71 @@
             return valid.length;
         }
 
-        // ==================== 同步 ====================
-        $('btnUploadToCloud').onclick = async () => { if (!state.isOnline) { showToast('❌ 请先切在线模式'); return } const local =
-                getLocalData(); if (!local.length) { showToast('⚠️ 本地无数据'); return } if (!confirm(
-                    `上传${local.length}条到云端？`)) return; try { const items = local.map(i => ({ name: i.name, url: i.url,
-                        category: i.category || '未分类', description: i.description || '', is_active: true }));
-                const { error } = await getClient().from('nav_links').insert(items); if (error) throw error;
+        // 格式转换
+        $('btnJsonToExcel').onclick = function() { $('fileInputConvertJson').click(); };
+        $('fileInputConvertJson').onchange = async function(e) {
+            const f = e.target.files[0];
+            if (!f) return;
+            if (typeof XLSX === 'undefined') { showToast('❌ Excel库未就绪'); return; }
+            try {
+                const items = JSON.parse(await f.text());
+                const ws = XLSX.utils.json_to_sheet(items);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+                XLSX.writeFile(wb, f.name.replace('.json', '.xlsx'));
+                showToast('✅ 转换成功');
+            } catch (err) { showToast('❌ ' + err.message); }
+            e.target.value = '';
+        };
+
+        $('btnExcelToJson').onclick = function() { $('fileInputConvertExcel').click(); };
+        $('fileInputConvertExcel').onchange = async function(e) {
+            const f = e.target.files[0];
+            if (!f) return;
+            if (typeof XLSX === 'undefined') { showToast('❌ Excel库未就绪'); return; }
+            try {
+                const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+                const items = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                downloadFile(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }), f.name.replace(
+                    '.xlsx', '.json'));
+                showToast('✅ 转换成功');
+            } catch (err) { showToast('❌ ' + err.message); }
+            e.target.value = '';
+        };
+
+        // ==================== 数据同步 ====================
+        $('btnUploadToCloud').onclick = async function() {
+            if (!state.isOnline) { showToast('❌ 请先切在线模式'); return; }
+            const local = getLocalData();
+            if (!local.length) { showToast('⚠️ 本地无数据'); return; }
+            if (!confirm(`上传${local.length}条到云端？`)) return;
+            try {
+                const items = local.map(i => ({ name: i.name, url: i.url, category: i.category || '未分类',
+                        description: i.description || '', is_active: true }));
+                const { error } = await getClient().from('nav_links').insert(items);
+                if (error) throw error;
                 showToast(`✅ 已上传${items.length}条`);
                 loadData(true);
-                updateSyncInfo() } catch (err) { handleDbError(err, '上传') } };
-        $('btnDownloadFromCloud').onclick = async () => { if (!state.isOnline) { showToast('❌ 请先切在线模式'); return } if (!
-                confirm('从云端覆盖本地？')) return; try { const { data, error } = await getClient().from('nav_links')
-                .select('id,name,url,category,description').eq('is_active', true).order('sort_order', { ascending: true });
+                updateSyncInfo();
+            } catch (err) { handleDbError(err, '上传'); }
+        };
+
+        $('btnDownloadFromCloud').onclick = async function() {
+            if (!state.isOnline) { showToast('❌ 请先切在线模式'); return; }
+            if (!confirm('从云端覆盖本地？')) return;
+            try {
+                const { data, error } = await getClient().from('nav_links')
+                    .select('id,name,url,category,description')
+                    .eq('is_active', true)
+                    .order('sort_order', { ascending: true });
                 if (error) throw error;
                 saveLocalData(data || []);
                 state.allData = data || [];
                 renderAll();
                 updateSyncInfo();
-                showToast(`✅ 已拉取${(data||[]).length}条`) } catch (err) { handleDbError(err, '拉取') } };
-
-        // ==================== 格式转换 ====================
-        $('btnJsonToExcel').onclick = () => $('fileInputConvertJson').click();
-        $('fileInputConvertJson').onchange = async e => { const f = e.target.files[0]; if (!f) return; if (typeof XLSX ===
-                'undefined') { showToast('❌ Excel库未就绪'); return } try { const items = JSON.parse(await f.text());
-                const ws = XLSX.utils.json_to_sheet(items);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-                XLSX.writeFile(wb, f.name.replace('.json', '.xlsx'));
-                showToast('✅ 转换成功') } catch (err) { showToast('❌ ' + err.message) }
-            e.target.value = '' };
-        $('btnExcelToJson').onclick = () => $('fileInputConvertExcel').click();
-        $('fileInputConvertExcel').onchange = async e => { const f = e.target.files[0]; if (!f) return; if (typeof XLSX ===
-                'undefined') { showToast('❌ Excel库未就绪'); return } try { const wb = XLSX.read(await f.arrayBuffer(),
-                    { type: 'array' });
-                const items = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                downloadFile(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }), f.name.replace(
-                    '.xlsx', '.json'));
-                showToast('✅ 转换成功') } catch (err) { showToast('❌ ' + err.message) }
-            e.target.value = '' };
+                showToast(`✅ 已拉取${(data||[]).length}条`);
+            } catch (err) { handleDbError(err, '拉取'); }
+        };
 
         // ==================== 搜索功能 ====================
         const searchBar = $('searchBar');
@@ -2096,10 +2658,8 @@
                 if (state.sortMode || state.multiSelectMode) {
                     state.sortMode = false;
                     localStorage.setItem('nav_sortMode', 'false');
-                    const st = $('sortModeToggle'); if (st) st.checked = false;
                     state.multiSelectMode = false;
                     localStorage.setItem('nav_multiSelectMode', 'false');
-                    const mt = $('multiSelectToggle'); if (mt) mt.checked = false;
                     resetAllSwipes();
                     clearSelection();
                 }
@@ -2136,10 +2696,8 @@
         $('multiDeleteBtn').onclick = function() { if (!state.selectedIds.length) return;
             batchDelete(); };
 
-        // ==================== 重置滑动（清空残留状态） ====================
-        function resetAllSwipes() {
-            // 无需处理，因为已移除左滑
-        }
+        // ==================== 重置滑动 ====================
+        function resetAllSwipes() { /* no-op */ }
 
         // ==================== 渲染引擎 ====================
         function renderAll() {
@@ -2168,9 +2726,6 @@
             renderContent();
             updateMultiSelectToolbar();
             updateCategorySuggestions();
-            if ($('settingsModal').classList.contains('show')) {
-                renderCategoryManage();
-            }
         }
 
         function renderContent() {
@@ -2197,6 +2752,7 @@
             let modeClass = '';
             if (state.sortMode) modeClass += ' sort-mode';
             if (state.multiSelectMode) modeClass += ' multi-select-mode';
+            if (state.editMode) modeClass += ' edit-mode';
 
             let bannerHtml = '';
             if (state.sortMode || state.multiSelectMode) {
@@ -2223,12 +2779,10 @@
                         if (state.sortMode) {
                             state.sortMode = false;
                             localStorage.setItem('nav_sortMode', 'false');
-                            const st = $('sortModeToggle'); if (st) st.checked = false;
                         }
                         if (state.multiSelectMode) {
                             state.multiSelectMode = false;
                             localStorage.setItem('nav_multiSelectMode', 'false');
-                            const mt = $('multiSelectToggle'); if (mt) mt.checked = false;
                         }
                         resetAllSwipes();
                         clearSelection();
@@ -2275,11 +2829,13 @@
             const isSelected = state.selectedIds.includes(String(item.id));
             const selectedClass = isSelected ? ' selected' : '';
 
-            let cardContent = `<div class="card" data-id="${item.id}" style="cursor:${state.multiSelectMode?'pointer':'context-menu'};">`;
-            if (state.sortMode) {
-                cardContent += `<div class="drag-handle-badge">⠿</div>`;
-            }
-            cardContent += `
+            const editBtn = state.editMode ?
+                `<button class="edit-btn" title="编辑">✏️</button>` :
+                '';
+
+            let cardContent = `<div class="card" data-id="${item.id}" style="cursor:${state.multiSelectMode?'pointer':'context-menu'};-webkit-touch-callout:none;">
+                ${editBtn}
+                ${state.sortMode ? `<div class="drag-handle-badge">⠿</div>` : ''}
                 <div class="card-icon" style="background:linear-gradient(135deg,${c[0]},${c[1]})">${initial}</div>
                 <div class="card-info"><div class="card-name">${name}</div>${desc?`<div class="card-desc">${desc}</div>`:''}</div>
                 ${state.sortMode ? `<div class="sort-quick-actions" style="display:flex;gap:4px;align-items:center;">
@@ -2295,10 +2851,10 @@
             } else {
                 return `<div class="swipe-wrapper" data-id="${item.id}">
                     <a class="card" href="${item.url}" target="_blank" rel="noopener" data-id="${item.id}">
+                        ${editBtn}
                         <div class="card-icon" style="background:linear-gradient(135deg,${c[0]},${c[1]})">${initial}</div>
                         <div class="card-info"><div class="card-name">${name}</div>${desc?`<div class="card-desc">${desc}</div>`:''}</div>
                     </a>
-                    <!-- 移除了滑动操作按钮 -->
                 </div>`;
             }
         }
@@ -2306,55 +2862,72 @@
         function showState(icon, title, desc) { contentEl.innerHTML =
                 `<div class="state-box"><div class="icon">${icon}</div><div class="title">${title}</div><div class="desc">${desc}</div></div>`; }
 
-        // ==================== 开关事件 ====================
-        const sortToggle = $('sortModeToggle');
-        const multiToggle = $('multiSelectToggle');
+        // ==================== 添加/编辑 ====================
+        $('btnAdd').onclick = function() {
+            $('editId').value = '';
+            $('addModalTitle').textContent = '➕ 添加导航';
+            $('addModalSubtitle').textContent = '新增记录将立即同步。';
+            $('addName').value = '';
+            $('addUrl').value = '';
+            $('addDesc').value = '';
+            $('addCategoryInput').value = '';
+            updateCategorySuggestions();
+            openModal('addModal');
+        };
 
-        if (sortToggle) {
-            sortToggle.checked = state.sortMode;
-            sortToggle.onchange = function() {
-                state.sortMode = this.checked;
-                localStorage.setItem('nav_sortMode', String(state.sortMode));
-                if (state.sortMode && state.viewMode !== 'list') {
-                    state.viewMode = 'list';
-                    localStorage.setItem('viewMode', 'list');
-                    applyView();
-                }
-                if (!state.sortMode && !state.multiSelectMode) {
-                    clearSelection();
-                }
-                const settingsModal = $('settingsModal');
-                if (settingsModal.classList.contains('show')) {
-                    closeModal('settingsModal');
-                }
-                resetAllSwipes();
-                renderContent();
-                showToast(state.sortMode ? '↕️ 排序模式已开启' : '✅ 排序模式已关闭');
-            };
+        function openEditModal(item) {
+            $('editId').value = item.id;
+            $('addModalTitle').textContent = '✏️ 编辑导航';
+            $('addModalSubtitle').textContent = '修改后自动同步。';
+            $('addName').value = item.name || '';
+            $('addUrl').value = item.url || '';
+            $('addDesc').value = item.description || '';
+            $('addCategoryInput').value = item.category || '';
+            updateCategorySuggestions();
+            openModal('addModal');
         }
 
-        if (multiToggle) {
-            multiToggle.checked = state.multiSelectMode;
-            multiToggle.onchange = function() {
-                state.multiSelectMode = this.checked;
-                localStorage.setItem('nav_multiSelectMode', String(state.multiSelectMode));
-                if (state.multiSelectMode && state.viewMode !== 'list') {
-                    state.viewMode = 'list';
-                    localStorage.setItem('viewMode', 'list');
-                    applyView();
+        $('btnSaveAdd').onclick = async function() {
+            const name = $('addName').value.trim(),
+                url = $('addUrl').value.trim();
+            const category = $('addCategoryInput').value.trim() || '未分类';
+            const description = $('addDesc').value.trim();
+            const editId = $('editId').value;
+            if (!name || !url) { showToast('❌ 名称和网址必填'); return }
+            if (editId) {
+                if (state.isOnline && !String(editId).startsWith('local_')) {
+                    try { const { error } = await getClient().from('nav_links').update({ name, url, category,
+                            description }).eq('id', editId); if (error) throw error;
+                        showToast('✅ 已更新到云端'); } catch (err) { handleDbError(err, '更新'); return }
                 }
-                if (!state.sortMode && !state.multiSelectMode) {
-                    clearSelection();
+                let local = getLocalData();
+                const idx = local.findIndex(i => String(i.id) === String(editId));
+                if (idx >= 0) { local[idx] = { ...local[idx], name, url, category, description };
+                    saveLocalData(local) }
+                state.allData = state.isOnline ? state.allData.map(i => String(i.id) === String(editId) ? { ...i,
+                    name, url, category, description } : i) : local;
+                closeModal('addModal');
+                renderAll();
+                showToast('✅ 已保存');
+            } else {
+                const newItem = { name, url, category, description, is_active: true };
+                if (state.isOnline) {
+                    try { const { error } = await getClient().from('nav_links').insert(newItem); if (error) throw error;
+                        showToast('✅ 已同步云端');
+                        closeModal('addModal');
+                        loadData() } catch (err) { handleDbError(err, '添加') }
+                } else {
+                    const local = getLocalData();
+                    newItem.id = 'local_' + Date.now();
+                    local.push(newItem);
+                    saveLocalData(local);
+                    state.allData = local;
+                    closeModal('addModal');
+                    renderAll();
+                    showToast('✅ 已保存到本地');
                 }
-                const settingsModal = $('settingsModal');
-                if (settingsModal.classList.contains('show')) {
-                    closeModal('settingsModal');
-                }
-                resetAllSwipes();
-                renderContent();
-                showToast(state.multiSelectMode ? '☑️ 多选模式已开启' : '✅ 多选模式已关闭');
-            };
-        }
+            }
+        };
 
         // ==================== 核心加载逻辑 ====================
         async function loadData(force = false) {
@@ -2404,44 +2977,6 @@
                     tabsEl.innerHTML = ''; }
             }
             updateSyncInfo();
-            if (state.mode === 'online') await saveSettingsToCloud();
-        }
-
-        async function saveSettingsToCloud() {
-            if (state.mode !== 'online') return;
-            try {
-                const client = getClient();
-                const payload = {
-                    id: 'app_settings',
-                    category_order: state.categoryOrder || [],
-                    default_category: state.defaultCategory || null,
-                    updated_at: new Date().toISOString()
-                };
-                const { error } = await client.from('nav_settings').upsert(payload, { onConflict: 'id' });
-                if (error) console.warn('设置同步云端失败:', error);
-            } catch (e) { console.warn('设置同步异常:', e); }
-        }
-
-        async function loadSettingsFromCloud() {
-            if (state.mode !== 'online') return;
-            try {
-                const client = getClient();
-                const { data, error } = await client.from('nav_settings')
-                    .select('category_order, default_category')
-                    .eq('id', 'app_settings')
-                    .maybeSingle();
-                if (error) throw error;
-                if (data) {
-                    if (data.category_order) {
-                        state.categoryOrder = data.category_order;
-                        localStorage.setItem('nav_categoryOrder', JSON.stringify(data.categoryOrder));
-                    }
-                    if (data.default_category) {
-                        state.defaultCategory = data.default_category;
-                        localStorage.setItem('nav_defaultCategory', data.default_category);
-                    }
-                }
-            } catch (e) { console.warn('加载云端设置失败:', e); }
         }
 
         // ==================== 初始化 ====================
@@ -2451,16 +2986,20 @@
             updateModeUI();
             refreshConfigDisplay();
 
-            // 初始化长按监听（移动端）
+            setupSaveSettingsButton();
+            setupEditModeToggle();
             setupLongPress();
-
-            // 拖拽排序（桌面+移动）
             initDragListeners();
 
             const savedDefault = localStorage.getItem('nav_defaultCategory');
             if (savedDefault) state.defaultCategory = savedDefault;
             const savedOrder = localStorage.getItem('nav_categoryOrder');
             if (savedOrder) try { state.categoryOrder = JSON.parse(savedOrder); } catch (e) {}
+
+            const modeToggle = document.getElementById('modeToggle');
+            if (modeToggle) {
+                modeToggle.checked = state.mode === 'online';
+            }
 
             const cached = getLocalData();
             if (cached.length > 0) {
@@ -2490,8 +3029,6 @@
                 updateCategorySuggestions();
             }
 
-            if (sortToggle) sortToggle.checked = state.sortMode;
-            if (multiToggle) multiToggle.checked = state.multiSelectMode;
             searchBar.style.display = 'none';
 
             const isMobile = window.innerWidth <= 768;
