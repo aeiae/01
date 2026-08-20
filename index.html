@@ -430,7 +430,7 @@
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s; font-family: inherit; }
-        .form-group select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+        .form-group select { cursor: pointer; appearance: auto; }
         .form-group textarea { resize: vertical; min-height: 80px; }
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99,102,241,0.12); }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
@@ -446,7 +446,7 @@
         .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
 
-        /* ===== 分组排序弹窗树形样式 ===== */
+        /* 分组排序弹窗树形样式 */
         .sort-tree-container {
             max-height: 400px;
             overflow-y: auto;
@@ -828,7 +828,7 @@
         </div>
     </div>
 
-    <!-- ===== 分组排序弹窗（修复版：树形+折叠+筛选） ===== -->
+    <!-- 分组排序弹窗 -->
     <div class="modal-overlay" id="groupSortModal">
         <div class="modal" style="max-width:680px;">
             <div class="modal-header">
@@ -836,7 +836,6 @@
                 <button class="close-btn" onclick="closeModal('groupSortModal')">&times;</button>
             </div>
             <p class="subtitle">拖拽分组调整顺序，点击文件夹折叠/展开，使用层级筛选快速定位。</p>
-            <!-- 筛选栏 -->
             <div class="sort-filter-bar" id="sortFilterBar">
                 <button class="filter-btn active" data-filter="all">📋 全部 <span class="badge" id="filterCountAll">0</span></button>
                 <button class="filter-btn" data-filter="1">📁 一级 <span class="badge" id="filterCount1">0</span></button>
@@ -853,7 +852,7 @@
         </div>
     </div>
 
-    <!-- 添加/编辑弹窗 -->
+    <!-- 添加/编辑弹窗（修改分类为下拉选择） -->
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <div class="modal-header"><h2 id="addModalTitle">➕ 添加导航</h2><button class="close-btn" onclick="closeModal('addModal')">&times;</button></div>
@@ -862,8 +861,10 @@
             <div class="form-group"><label>名称 *</label><input type="text" id="addName" placeholder="如：百度"></div>
             <div class="form-group"><label>网址 *</label><input type="url" id="addUrl" placeholder="https://baidu.com"></div>
             <div class="form-group"><label>分类</label>
-                <input type="text" id="addCategoryInput" placeholder="输入分类路径，如 工作/开发/前端" list="categorySuggestions">
-                <datalist id="categorySuggestions"></datalist>
+                <select id="addCategorySelect" style="width:100%;">
+                    <option value="">选择或新建分类</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-secondary" id="addNewCategoryBtn" style="margin-top:4px;">➕ 新建分类</button>
             </div>
             <div class="form-group"><label>描述</label><textarea id="addDesc" placeholder="简短描述..."></textarea></div>
             <div class="modal-actions">
@@ -873,7 +874,7 @@
         </div>
     </div>
 
-    <!-- 移动卡片分组弹窗 -->
+    <!-- 移动卡片分组弹窗（修改分类为下拉选择） -->
     <div class="modal-overlay" id="moveModal">
         <div class="modal" style="max-width:400px;">
             <div class="modal-header"><h2>📂 移动到分组</h2><button class="close-btn" onclick="closeModal('moveModal')">&times;</button></div>
@@ -881,8 +882,10 @@
             <input type="hidden" id="moveItemId" value="">
             <input type="hidden" id="moveBatch" value="false">
             <div class="form-group"><label>目标分组</label>
-                <input type="text" id="moveCategoryInput" placeholder="输入分类路径" list="moveCategorySuggestions">
-                <datalist id="moveCategorySuggestions"></datalist>
+                <select id="moveCategorySelect" style="width:100%;">
+                    <option value="">选择分组</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-secondary" id="moveNewCategoryBtn" style="margin-top:4px;">➕ 新建分类</button>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeModal('moveModal')">取消</button>
@@ -946,11 +949,9 @@
             selectedIds: [],
             sidebarOpen: localStorage.getItem('nav_sidebarOpen') === 'true' || window.innerWidth > 768,
             editMode: localStorage.getItem('nav_editMode') === 'true',
-            // 侧边栏树形折叠状态
             treeCollapsed: JSON.parse(localStorage.getItem('nav_tree_collapsed') || '{}'),
-            // 分组排序树形折叠状态（独立存储）
             sortTreeExpand: JSON.parse(localStorage.getItem('nav_sort_tree_expand') || '{}'),
-            sortFilter: 'all', // 'all' | '1' | '2' | '3' | '4' | '5'
+            sortFilter: 'all',
         };
         const $ = id => document.getElementById(id);
         const LOCAL_KEY = 'nav_local_data';
@@ -1006,11 +1007,10 @@
             toggleSidebar();
         });
 
-        // ===== 移动端右滑调出侧栏 ===== (整屏触发)
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let isSwipingSidebar = false;
-
+        // 移动端右滑
+        let touchStartX = 0,
+            touchStartY = 0,
+            isSwipingSidebar = false;
         document.addEventListener('touchstart', function(e) {
             if (window.innerWidth > 768) return;
             if (e.target.closest('.sidebar') || e.target.closest('.modal-overlay')) return;
@@ -1019,7 +1019,6 @@
             touchStartY = touch.clientY;
             isSwipingSidebar = false;
         }, { passive: true });
-
         document.addEventListener('touchmove', function(e) {
             if (window.innerWidth > 768) return;
             if (e.target.closest('.sidebar') || e.target.closest('.modal-overlay')) return;
@@ -1030,12 +1029,9 @@
             if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) && dx > 0) {
                 isSwipingSidebar = true;
                 e.preventDefault();
-                if (!state.sidebarOpen) {
-                    toggleSidebar(true);
-                }
+                if (!state.sidebarOpen) toggleSidebar(true);
             }
         }, { passive: false });
-
         document.addEventListener('touchend', function() {
             touchStartX = 0;
             touchStartY = 0;
@@ -1070,7 +1066,7 @@
         document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if (e.target === el) el
                     .classList.remove('show') }));
 
-        // ==================== 云端同步（设置） ====================
+        // ==================== 云端同步设置 ====================
         async function syncSettingsToCloud() {
             if (state.mode !== 'online') return;
             try {
@@ -1108,20 +1104,7 @@
             } catch (e) { console.warn('加载云端设置失败:', e); }
         }
 
-        function updateSettingsAndSync(order, defaultCat) {
-            if (order !== undefined) {
-                state.categoryOrder = order;
-                localStorage.setItem('nav_categoryOrder', JSON.stringify(order));
-            }
-            if (defaultCat !== undefined) {
-                state.defaultCategory = defaultCat;
-                localStorage.setItem('nav_defaultCategory', defaultCat);
-            }
-            syncSettingsToCloud();
-            renderAll();
-        }
-
-        // ==================== 密度滑块 ====================
+        // ==================== 密度 ====================
         function applyDensity(val) {
             const gap = 8 + (val / 100) * 20;
             const pad = 12 + (val / 100) * 16;
@@ -1173,7 +1156,6 @@
             $('displayUrl').textContent = url || '未设置';
         }
 
-        // ==================== 保存并连接按钮 ====================
         function setupSaveSettingsButton() {
             const btn = document.getElementById('btnSaveSettings');
             if (!btn) return;
@@ -1211,7 +1193,6 @@
             });
         }
 
-        // ==================== 编辑开关 ====================
         function setupEditModeToggle() {
             const toggle = document.getElementById('editModeToggle');
             if (!toggle) return;
@@ -1225,7 +1206,6 @@
             });
         }
 
-        // ==================== 模式切换事件 ====================
         document.addEventListener('DOMContentLoaded', function() {
             const modeToggle = document.getElementById('modeToggle');
             if (modeToggle) {
@@ -1248,7 +1228,6 @@
             setupEditModeToggle();
         });
 
-        // ==================== 状态指示 & 云端统计 ====================
         function updateSyncStatus(on, text) {
             state.isOnline = on;
             const d = $('syncDot'),
@@ -1340,12 +1319,81 @@
             state.allData.forEach(d => { if (d.category) set.add(d.category); });
             return Array.from(set).sort();
         }
-        function updateCategorySuggestions() {
+
+        // ===== 新增：填充分类下拉选择框 =====
+        function populateCategorySelects() {
             const paths = getCategoryPaths();
-            const datalist1 = $('categorySuggestions');
-            const datalist2 = $('moveCategorySuggestions');
-            if (datalist1) datalist1.innerHTML = paths.map(p => `<option value="${escapeHtml(p)}">`).join('');
-            if (datalist2) datalist2.innerHTML = paths.map(p => `<option value="${escapeHtml(p)}">`).join('');
+            const addSelect = document.getElementById('addCategorySelect');
+            const moveSelect = document.getElementById('moveCategorySelect');
+            const currentAdd = addSelect.value;
+            const currentMove = moveSelect.value;
+
+            const buildOptions = (selected) => {
+                let html = `<option value="">${selected === '' ? '选择或新建分类' : '选择分组'}</option>`;
+                paths.forEach(p => {
+                    const sel = (p === selected) ? 'selected' : '';
+                    html += `<option value="${escapeHtml(p)}" ${sel}>${escapeHtml(p)}</option>`;
+                });
+                return html;
+            };
+
+            addSelect.innerHTML = buildOptions(currentAdd);
+            moveSelect.innerHTML = buildOptions(currentMove);
+
+            // 如果之前有值，恢复选择（如果存在）
+            if (currentAdd && paths.includes(currentAdd)) {
+                addSelect.value = currentAdd;
+            } else {
+                addSelect.value = '';
+            }
+            if (currentMove && paths.includes(currentMove)) {
+                moveSelect.value = currentMove;
+            } else {
+                moveSelect.value = '';
+            }
+        }
+
+        // 新建分类按钮事件
+        function setupNewCategoryButtons() {
+            const addBtn = document.getElementById('addNewCategoryBtn');
+            const moveBtn = document.getElementById('moveNewCategoryBtn');
+
+            const handleNewCategory = (selectEl) => {
+                const name = prompt('请输入新分类名称（支持多级路径，如 工作/开发）：');
+                if (name && name.trim()) {
+                    const trimmed = name.trim();
+                    // 检查是否已存在
+                    const paths = getCategoryPaths();
+                    if (paths.includes(trimmed)) {
+                        showToast('⚠️ 分类已存在');
+                        selectEl.value = trimmed;
+                        return;
+                    }
+                    // 添加选项
+                    const opt = document.createElement('option');
+                    opt.value = trimmed;
+                    opt.textContent = trimmed;
+                    opt.selected = true;
+                    selectEl.appendChild(opt);
+                    // 同时更新另一个select
+                    const other = (selectEl.id === 'addCategorySelect') ?
+                        document.getElementById('moveCategorySelect') :
+                        document.getElementById('addCategorySelect');
+                    if (!other.querySelector(`option[value="${escapeHtml(trimmed)}"]`)) {
+                        const opt2 = document.createElement('option');
+                        opt2.value = trimmed;
+                        opt2.textContent = trimmed;
+                        other.appendChild(opt2);
+                    }
+                    // 将新分类添加到数据中（仅为了下拉显示，实际保存时才会真正创建链接）
+                    // 但为了列表一致，我们不需要修改 allData，因为新分类还没有链接
+                    // 用户保存链接时才会创建
+                    showToast(`✅ 已创建分类「${trimmed}」`);
+                }
+            };
+
+            addBtn.onclick = () => handleNewCategory(document.getElementById('addCategorySelect'));
+            moveBtn.onclick = () => handleNewCategory(document.getElementById('moveCategorySelect'));
         }
 
         // ==================== 构建树形结构 ====================
@@ -1369,8 +1417,7 @@
             }).length;
         }
 
-        // ==================== 分组排序弹窗（树形可折叠+层级筛选+拖拽） ====================
-        // 构建树形数据
+        // ==================== 分组排序弹窗（树形） ====================
         function buildSortTreeData(paths) {
             const tree = {};
             paths.forEach(p => {
@@ -1390,13 +1437,7 @@
                 const fullPath = parentPath ? parentPath + '/' + key : key;
                 const children = tree[key];
                 const hasChildren = Object.keys(children).length > 0;
-                list.push({
-                    name: key,
-                    path: fullPath,
-                    level: level,
-                    hasChildren: hasChildren,
-                    children: children
-                });
+                list.push({ name: key, path: fullPath, level: level, hasChildren: hasChildren, children: children });
                 if (hasChildren) {
                     flattenSortTree(children, fullPath, level + 1, list);
                 }
@@ -1404,14 +1445,12 @@
             return list;
         }
 
-        // 获取排序树数据
         function getSortTreeItems() {
             const paths = getCategoryPaths();
             if (!paths.length) return [];
             const tree = buildSortTreeData(paths);
             const flat = [];
             flattenSortTree(tree, '', 1, flat);
-            // 按 categoryOrder 排序
             const ordered = state.categoryOrder || paths;
             const orderMap = {};
             ordered.forEach((p, idx) => { orderMap[p] = idx; });
@@ -1424,7 +1463,6 @@
             return flat;
         }
 
-        // 构建节点树（用于渲染）
         function buildSortTreeNode(item, allItems) {
             const children = allItems.filter(i => i.path.startsWith(item.path + '/') && i.level === item.level + 1);
             const ordered = state.categoryOrder || [];
@@ -1436,13 +1474,9 @@
                 if (idxB === -1) return -1;
                 return idxA - idxB;
             });
-            return {
-                ...item,
-                children: children.map(c => buildSortTreeNode(c, allItems))
-            };
+            return { ...item, children: children.map(c => buildSortTreeNode(c, allItems)) };
         }
 
-        // 渲染树形排序
         function renderSortTree() {
             const container = $('groupSortTree');
             const allItems = getSortTreeItems();
@@ -1451,7 +1485,6 @@
                 return;
             }
 
-            // 计算各层级数量
             const levelCounts = { all: allItems.length };
             for (let i = 1; i <= 5; i++) {
                 levelCounts[i] = allItems.filter(item => item.level === i).length;
@@ -1463,14 +1496,12 @@
             const allEl = document.getElementById('filterCountAll');
             if (allEl) allEl.textContent = allItems.length;
 
-            // 筛选
             let filtered = allItems;
             if (state.sortFilter !== 'all') {
                 const targetLevel = parseInt(state.sortFilter);
                 filtered = allItems.filter(item => item.level === targetLevel);
             }
 
-            // 构建树
             let rootNodes = [];
             if (state.sortFilter === 'all') {
                 const topItems = allItems.filter(item => item.level === 1);
@@ -1485,12 +1516,8 @@
                 });
                 rootNodes = topItems.map(item => buildSortTreeNode(item, allItems));
             } else {
-                // 筛选模式：显示目标层级，但显示完整路径
                 const targetLevel = parseInt(state.sortFilter);
                 const targetItems = allItems.filter(item => item.level === targetLevel);
-                const pathMap = {};
-                allItems.forEach(item => { pathMap[item.path] = item; });
-
                 const rootMap = {};
                 targetItems.forEach(item => {
                     const parts = item.path.split('/');
@@ -1502,20 +1529,13 @@
                         const fullPath = currentPath ? currentPath + '/' + part : part;
                         const nodeData = allItems.find(n => n.path === fullPath);
                         if (!nodeData) break;
-                        const newNode = {
-                            ...nodeData,
-                            children: [],
-                            _isPathNode: true,
-                            _show: i === parts.length - 1
-                        };
+                        const newNode = { ...nodeData, children: [], _isPathNode: true, _show: i === parts
+                            .length - 1 };
                         if (!parentNode) {
                             rootNode = newNode;
                             const key = fullPath;
-                            if (!rootMap[key]) {
-                                rootMap[key] = newNode;
-                            } else {
-                                rootNode = rootMap[key];
-                            }
+                            if (!rootMap[key]) rootMap[key] = newNode;
+                            else rootNode = rootMap[key];
                         } else {
                             let existing = parentNode.children.find(c => c.path === fullPath);
                             if (!existing) {
@@ -1528,7 +1548,6 @@
                         currentPath = fullPath;
                     }
                 });
-                // 排序根节点
                 const ordered = state.categoryOrder || [];
                 const sortedRoots = Object.values(rootMap).sort((a, b) => {
                     const idxA = ordered.indexOf(a.path);
@@ -1541,17 +1560,15 @@
                 rootNodes = sortedRoots;
             }
 
-            // 渲染
             const levelLabels = ['', '一级', '二级', '三级', '四级', '五级'];
             const levelOptions = [1, 2, 3, 4, 5].map(l =>
                 `<option value="${l}">${levelLabels[l]}</option>`
             ).join('');
 
-            function renderTreeNode(node, depth) {
+            function renderTreeNode(node) {
                 const hasChildren = node.children && node.children.length > 0;
                 const path = node.path;
-                const isExpanded = state.sortTreeExpand[path] !== false; // 默认展开
-                const isLeaf = !hasChildren;
+                const isExpanded = state.sortTreeExpand[path] !== false;
                 const indent = (node.level - 1) * 20;
                 const isFiltered = state.sortFilter !== 'all' && node.level === parseInt(state.sortFilter);
 
@@ -1565,24 +1582,20 @@
                         <button class="arrow-btn up-btn" data-path="${escapeHtml(path)}" title="上移">⬆</button>
                         <button class="arrow-btn down-btn" data-path="${escapeHtml(path)}" title="下移">⬇</button>
                     </div>
-                    ${hasChildren ? `<div class="children-wrap ${isExpanded ? 'expanded' : 'collapsed'}" data-parent="${escapeHtml(path)}">${node.children.map(c => renderTreeNode(c, depth + 1)).join('')}</div>` : ''}
+                    ${hasChildren ? `<div class="children-wrap ${isExpanded ? 'expanded' : 'collapsed'}" data-parent="${escapeHtml(path)}">${node.children.map(c => renderTreeNode(c)).join('')}</div>` : ''}
                 </div>`;
                 return html;
             }
 
-            container.innerHTML = rootNodes.map(n => renderTreeNode(n, 1)).join('');
+            container.innerHTML = rootNodes.map(n => renderTreeNode(n)).join('');
 
-            // 为每个select设置当前值
             container.querySelectorAll('.level-select').forEach(select => {
                 const path = select.dataset.path;
                 const item = allItems.find(i => i.path === path);
-                if (item) {
-                    select.value = Math.min(item.level, 5);
-                }
+                if (item) select.value = Math.min(item.level, 5);
             });
 
-            // 绑定事件
-            // 折叠按钮
+            // 事件绑定
             container.querySelectorAll('.toggle-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1607,7 +1620,6 @@
                 });
             });
 
-            // 箭头按钮
             container.querySelectorAll('.up-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1623,7 +1635,6 @@
                 });
             });
 
-            // 层级选择
             container.querySelectorAll('.level-select').forEach(select => {
                 select.addEventListener('change', function() {
                     const path = this.dataset.path;
@@ -1632,26 +1643,15 @@
                 });
             });
 
-            // 拖拽初始化
             initSortTreeDrag();
         }
 
-        // 拖拽排序（树形）
-        let sortTreeDrag = {
-            active: false,
-            sourceEl: null,
-            placeholder: null,
-            ghost: null,
-            offsetY: 0,
-            container: null,
-            sourcePath: null,
-        };
+        let sortTreeDrag = { active: false, sourceEl: null, placeholder: null, ghost: null, offsetY: 0, container: null,
+            sourcePath: null };
 
         function initSortTreeDrag() {
             const container = $('groupSortTree');
             if (!container) return;
-
-            // 移除旧监听避免重复绑定
             const oldMouse = container._dragMouseHandler;
             const oldTouch = container._dragTouchHandler;
             if (oldMouse) container.removeEventListener('mousedown', oldMouse);
@@ -1677,7 +1677,6 @@
                 const touch = e.touches[0];
                 startSortTreeDrag(node, touch.clientY);
             };
-
             container._dragMouseHandler = mouseHandler;
             container._dragTouchHandler = touchHandler;
             container.addEventListener('mousedown', mouseHandler);
@@ -1691,8 +1690,6 @@
             sortTreeDrag.sourcePath = node.dataset.path;
             sortTreeDrag.offsetY = clientY - rect.top;
             sortTreeDrag.container = node.parentElement;
-
-            // 幽灵
             const ghost = node.cloneNode(true);
             ghost.style.position = 'fixed';
             ghost.style.width = rect.width + 'px';
@@ -1711,8 +1708,6 @@
             if (handle) handle.style.display = 'none';
             document.body.appendChild(ghost);
             sortTreeDrag.ghost = ghost;
-
-            // 占位
             const ph = document.createElement('div');
             ph.className = 'sort-drag-placeholder';
             ph.style.height = rect.height + 'px';
@@ -1720,48 +1715,35 @@
             sortTreeDrag.placeholder = ph;
             node.parentElement.insertBefore(ph, node);
             node.style.display = 'none';
-
-            // 全局监听
             document.addEventListener('mousemove', sortTreeDragMove);
             document.addEventListener('mouseup', sortTreeDragEnd);
             document.addEventListener('touchmove', sortTreeDragMoveTouch, { passive: false });
             document.addEventListener('touchend', sortTreeDragEnd);
         }
 
-        function sortTreeDragMove(e) {
-            if (!sortTreeDrag.active) return;
+        function sortTreeDragMove(e) { if (!sortTreeDrag.active) return;
             e.preventDefault();
-            moveSortTreeDrag(e.clientY);
-        }
+            moveSortTreeDrag(e.clientY); }
 
-        function sortTreeDragMoveTouch(e) {
-            if (!sortTreeDrag.active) return;
+        function sortTreeDragMoveTouch(e) { if (!sortTreeDrag.active) return;
             e.preventDefault();
             const touch = e.touches[0];
-            moveSortTreeDrag(touch.clientY);
-        }
+            moveSortTreeDrag(touch.clientY); }
 
         function moveSortTreeDrag(clientY) {
             if (!sortTreeDrag.active || !sortTreeDrag.ghost) return;
             const ghost = sortTreeDrag.ghost;
             ghost.style.top = (clientY - sortTreeDrag.offsetY) + 'px';
-
             const container = sortTreeDrag.container;
             const nodes = container.querySelectorAll('.sort-tree-node:not(.sort-drag-placeholder)');
             let targetNode = null;
             for (const n of nodes) {
                 const rect = n.getBoundingClientRect();
                 const mid = rect.top + rect.height / 2;
-                if (clientY < mid) {
-                    targetNode = n;
-                    break;
-                }
+                if (clientY < mid) { targetNode = n; break; }
             }
-            if (targetNode) {
-                container.insertBefore(sortTreeDrag.placeholder, targetNode);
-            } else {
-                container.appendChild(sortTreeDrag.placeholder);
-            }
+            if (targetNode) container.insertBefore(sortTreeDrag.placeholder, targetNode);
+            else container.appendChild(sortTreeDrag.placeholder);
         }
 
         function sortTreeDragEnd() {
@@ -1770,21 +1752,18 @@
             const placeholder = sortTreeDrag.placeholder;
             const ghost = sortTreeDrag.ghost;
             const container = sortTreeDrag.container;
-
             if (placeholder && node) {
                 container.insertBefore(node, placeholder);
                 placeholder.remove();
                 node.style.display = '';
             }
             if (ghost) ghost.remove();
-
             sortTreeDrag.active = false;
             sortTreeDrag.sourceEl = null;
             sortTreeDrag.placeholder = null;
             sortTreeDrag.ghost = null;
             sortTreeDrag.container = null;
             sortTreeDrag.sourcePath = null;
-
             document.removeEventListener('mousemove', sortTreeDragMove);
             document.removeEventListener('mouseup', sortTreeDragEnd);
             document.removeEventListener('touchmove', sortTreeDragMoveTouch);
@@ -1802,11 +1781,8 @@
             const parent = container;
             const item1 = items[idx];
             const item2 = items[newIdx];
-            if (direction === -1) {
-                parent.insertBefore(item1, item2);
-            } else {
-                parent.insertBefore(item2, item1);
-            }
+            if (direction === -1) parent.insertBefore(item1, item2);
+            else parent.insertBefore(item2, item1);
         }
 
         function changeSortItemLevel(path, newLevel) {
@@ -1826,7 +1802,6 @@
             }
         }
 
-        // 保存分组排序
         function saveGroupSort() {
             const container = $('groupSortTree');
             const items = container.querySelectorAll('.sort-tree-node');
@@ -1841,19 +1816,14 @@
                 levelMap[path] = level;
             });
 
-            // 构建新的路径
             const newPaths = [];
             const stack = [];
             newOrder.forEach((path, index) => {
                 const targetLevel = levelMap[path] || 1;
                 const parts = path.split('/');
                 const name = parts[parts.length - 1];
-                while (stack.length > targetLevel - 1) {
-                    stack.pop();
-                }
-                while (stack.length < targetLevel - 1) {
-                    stack.push('未命名');
-                }
+                while (stack.length > targetLevel - 1) stack.pop();
+                while (stack.length < targetLevel - 1) stack.push('未命名');
                 const parentPath = stack.length > 0 ? stack.join('/') : '';
                 const newPath = parentPath ? parentPath + '/' + name : name;
                 newPaths.push(newPath);
@@ -1867,9 +1837,7 @@
             }
 
             const pathMap = {};
-            newOrder.forEach((oldPath, idx) => {
-                pathMap[oldPath] = newPaths[idx];
-            });
+            newOrder.forEach((oldPath, idx) => { pathMap[oldPath] = newPaths[idx]; });
 
             state.allData.forEach(d => {
                 const oldCat = d.category;
@@ -1924,31 +1892,24 @@
             closeModal('groupSortModal');
         }
 
-        // 打开分组排序弹窗
         function openGroupSortModal() {
-            // 初始化展开状态：默认全部展开
             const allItems = getSortTreeItems();
             allItems.forEach(item => {
                 if (item.hasChildren) {
-                    if (state.sortTreeExpand[item.path] === undefined) {
-                        state.sortTreeExpand[item.path] = true;
-                    }
+                    if (state.sortTreeExpand[item.path] === undefined) state.sortTreeExpand[item.path] = true;
                 }
             });
             state.sortFilter = 'all';
-            // 更新筛选按钮状态
             document.querySelectorAll('#sortFilterBar .filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.filter === 'all');
             });
             renderSortTree();
             openModal('groupSortModal');
 
-            // 绑定保存按钮
             const saveBtn = $('btnSaveGroupSort');
             saveBtn.removeEventListener('click', saveGroupSort);
             saveBtn.addEventListener('click', saveGroupSort);
 
-            // 绑定筛选按钮
             document.querySelectorAll('#sortFilterBar .filter-btn').forEach(btn => {
                 btn.removeEventListener('click', sortFilterHandler);
                 btn.addEventListener('click', sortFilterHandler);
@@ -1964,7 +1925,7 @@
             renderSortTree();
         }
 
-        // ==================== 首页树形渲染（侧栏） ====================
+        // ==================== 侧栏树形渲染 ====================
         function renderTabs() {
             const catSet = new Set(state.allData.map(d => d.category || '未分类'));
             const paths = Array.from(catSet).sort();
@@ -2022,7 +1983,6 @@
             html += renderNode(tree, '');
             tabsEl.innerHTML = html;
 
-            // 绑定事件
             tabsEl.querySelectorAll('.tab-node').forEach(node => {
                 node.addEventListener('click', function(e) {
                     if (e.target.closest('.toggle-icon')) return;
@@ -2069,7 +2029,6 @@
                 });
             });
 
-            // 折叠图标事件
             tabsEl.querySelectorAll('.toggle-icon').forEach(toggle => {
                 toggle.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -2165,11 +2124,8 @@
 
         // ==================== 右键菜单 ====================
         const ctxMenu = $('ctxMenu');
-
         document.addEventListener('click', function(e) {
-            if (!e.target.closest('.ctx-menu')) {
-                hideCtxMenu();
-            }
+            if (!e.target.closest('.ctx-menu')) hideCtxMenu();
         });
 
         function showCtxMenu(x, y, item, type) {
@@ -2213,7 +2169,6 @@
             document.querySelectorAll('.card[data-longpress]').forEach(card => card.removeAttribute('data-longpress'));
         }
 
-        // 桌面端右键
         document.addEventListener('contextmenu', function(e) {
             const card = e.target.closest('.card');
             if (card && card.hasAttribute('data-longpress')) {
@@ -2230,13 +2185,10 @@
                     showCtxMenu(e.clientX, e.clientY, item, 'card');
                 }
             } else {
-                if (!e.target.closest('.tab-node')) {
-                    hideCtxMenu();
-                }
+                if (!e.target.closest('.tab-node')) hideCtxMenu();
             }
         }, { passive: false });
 
-        // 编辑按钮点击（打开卡片右键菜单）
         document.addEventListener('click', function(e) {
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) {
@@ -2253,14 +2205,12 @@
             }
         });
 
-        // 右键菜单项处理
         ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
             el.onclick = () => {
                 const action = el.dataset.action;
                 const item = state.ctxItem;
                 const path = state.ctxCategoryPath;
                 const type = state.ctxCategoryType;
-
                 hideCtxMenu();
 
                 if (type === 'card') {
@@ -2356,8 +2306,8 @@
         });
 
         // ==================== 移动端长按 ====================
-        let longPressTimer = null;
-        let longPressTriggered = false;
+        let longPressTimer = null,
+            longPressTriggered = false;
 
         function setupLongPress() {
             contentEl.addEventListener('touchstart', function(e) {
@@ -2368,7 +2318,6 @@
                 const id = card.dataset.id;
                 const item = state.allData.find(i => String(i.id) === String(id));
                 if (!item) return;
-
                 longPressTriggered = false;
                 longPressTimer = setTimeout(() => {
                     longPressTriggered = true;
@@ -2378,53 +2327,31 @@
                     e.preventDefault();
                 }, 500);
             }, { passive: false });
-
             contentEl.addEventListener('touchmove', function(e) {
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
+                if (longPressTimer) { clearTimeout(longPressTimer);
+                    longPressTimer = null; }
                 const card = e.target.closest('.card');
                 if (card) card.removeAttribute('data-longpress');
             }, { passive: true });
-
             contentEl.addEventListener('touchend', function(e) {
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
+                if (longPressTimer) { clearTimeout(longPressTimer);
+                    longPressTimer = null; }
                 const card = e.target.closest('.card');
                 if (card) card.removeAttribute('data-longpress');
-                if (longPressTriggered) {
-                    e.preventDefault();
-                }
+                if (longPressTriggered) e.preventDefault();
                 longPressTriggered = false;
             }, { passive: false });
-
             document.addEventListener('touchstart', function(e) {
-                if (!e.target.closest('.ctx-menu') && !e.target.closest('.card')) {
-                    hideCtxMenu();
-                }
+                if (!e.target.closest('.ctx-menu') && !e.target.closest('.card')) hideCtxMenu();
             }, { passive: true });
-
             document.addEventListener('contextmenu', function(e) {
-                if (e.target.closest('.card') || e.target.closest('.tab-node')) {
-                    e.preventDefault();
-                }
+                if (e.target.closest('.card') || e.target.closest('.tab-node')) e.preventDefault();
             }, { passive: false });
         }
 
         // ==================== 拖拽排序（链接） ====================
-        let drag = {
-            active: false,
-            sourceWrapper: null,
-            ghost: null,
-            placeholder: null,
-            sourceId: null,
-            offsetX: 0,
-            offsetY: 0,
-            lastOverId: null
-        };
+        let drag = { active: false, sourceWrapper: null, ghost: null, placeholder: null, sourceId: null, offsetX: 0,
+            offsetY: 0, lastOverId: null };
 
         function initDragListeners() {
             contentEl.addEventListener('mousedown', function(e) {
@@ -2658,33 +2585,21 @@
             if (isBatch) { $('moveItemId').value = '';
                 $('moveBatch').value = 'true'; } else { $('moveItemId').value = item.id;
                 $('moveBatch').value = 'false'; }
-            $('moveCategoryInput').value = '';
-            updateCategorySuggestions();
+            // 填充下拉框
+            populateCategorySelects();
+            const moveSelect = document.getElementById('moveCategorySelect');
+            // 如果 item 有 category，设为选中
+            if (item && item.category) {
+                if (Array.from(moveSelect.options).some(o => o.value === item.category)) {
+                    moveSelect.value = item.category;
+                } else {
+                    moveSelect.value = '';
+                }
+            } else {
+                moveSelect.value = '';
+            }
             openModal('moveModal');
         }
-        $('btnConfirmMove').onclick = async () => {
-            const isBatch = $('moveBatch').value === 'true';
-            const newCat = $('moveCategoryInput').value.trim() || '未分类';
-            if (isBatch) { batchMoveToCategory(newCat);
-                closeModal('moveModal'); return; }
-            const id = $('moveItemId').value;
-            if (!id) { showToast('❌ 未选择项目'); return; }
-            if (state.isOnline && !String(id).startsWith('local_')) {
-                try { const { error } = await getClient().from('nav_links').update({ category: newCat }).eq('id', id); if (
-                        error) throw error;
-                    showToast(`✅ 已移动到「${newCat}」`) } catch (err) { handleDbError(err, '移动'); return }
-            }
-            let local = getLocalData();
-            const idx = local.findIndex(i => String(i.id) === String(id));
-            if (idx >= 0) { local[idx].category = newCat;
-                saveLocalData(local) }
-            state.allData = state.isOnline ? state.allData.map(i => String(i.id) === String(id) ? { ...i,
-                category: newCat } : i) : local;
-            closeModal('moveModal');
-            resetAllSwipes();
-            renderAll();
-            if (!state.isOnline) showToast(`✅ 已移动到「${newCat}」`);
-        };
 
         // ==================== 删除（卡片） ====================
         async function deleteLink(id, name) {
@@ -2730,7 +2645,6 @@
             openModal('choiceModal');
         }
 
-        // 导出 JSON
         $('btnExportJson').onclick = function() {
             if (!state.allData.length) { showToast('⚠️ 无数据'); return; }
             showChoice('导出JSON', [
@@ -2756,7 +2670,6 @@
                     showToast('✅ 已复制') });
         };
 
-        // 导入 JSON
         $('btnImportJson').onclick = function() {
             showChoice('导入JSON', [
                 { icon: '📁', title: '从文件', desc: '选择.json', action: () => $('fileInputJson').click() },
@@ -2789,7 +2702,6 @@
             } catch (err) { showToast('❌ ' + err.message); }
         };
 
-        // 导出 Excel
         $('btnExportExcel').onclick = function() {
             if (!state.allData.length || typeof XLSX === 'undefined') {
                 showToast('⚠️ 无数据或Excel库未就绪');
@@ -2803,7 +2715,6 @@
             showToast('✅ Excel已导出');
         };
 
-        // 导入 Excel
         $('btnImportExcel').onclick = function() { $('fileInputExcel').click(); };
 
         $('fileInputExcel').onchange = async function(e) {
@@ -2820,7 +2731,6 @@
             e.target.value = '';
         };
 
-        // 书签→JSON
         $('btnBookmarkToJson').onclick = function() { $('fileInputBookmark').click(); };
 
         $('fileInputBookmark').onchange = async function(e) {
@@ -2901,7 +2811,6 @@
             return valid.length;
         }
 
-        // 格式转换
         $('btnJsonToExcel').onclick = function() { $('fileInputConvertJson').click(); };
         $('fileInputConvertJson').onchange = async function(e) {
             const f = e.target.files[0];
@@ -3014,8 +2923,8 @@
         $('multiMoveBtn').onclick = function() { if (!state.selectedIds.length) return;
             $('moveItemId').value = '';
             $('moveBatch').value = 'true';
-            $('moveCategoryInput').value = '';
-            updateCategorySuggestions();
+            populateCategorySelects();
+            document.getElementById('moveCategorySelect').value = '';
             openModal('moveModal'); };
         $('multiDeleteBtn').onclick = function() { if (!state.selectedIds.length) return;
             batchDelete(); };
@@ -3049,7 +2958,7 @@
             renderTabs();
             renderContent();
             updateMultiSelectToolbar();
-            updateCategorySuggestions();
+            populateCategorySelects(); // 更新分类下拉
         }
 
         function renderContent() {
@@ -3194,8 +3103,8 @@
             $('addName').value = '';
             $('addUrl').value = '';
             $('addDesc').value = '';
-            $('addCategoryInput').value = '';
-            updateCategorySuggestions();
+            populateCategorySelects();
+            document.getElementById('addCategorySelect').value = '';
             openModal('addModal');
         };
 
@@ -3206,15 +3115,20 @@
             $('addName').value = item.name || '';
             $('addUrl').value = item.url || '';
             $('addDesc').value = item.description || '';
-            $('addCategoryInput').value = item.category || '';
-            updateCategorySuggestions();
+            populateCategorySelects();
+            const addSelect = document.getElementById('addCategorySelect');
+            if (item.category && Array.from(addSelect.options).some(o => o.value === item.category)) {
+                addSelect.value = item.category;
+            } else {
+                addSelect.value = '';
+            }
             openModal('addModal');
         }
 
         $('btnSaveAdd').onclick = async function() {
             const name = $('addName').value.trim(),
                 url = $('addUrl').value.trim();
-            const category = $('addCategoryInput').value.trim() || '未分类';
+            const category = document.getElementById('addCategorySelect').value.trim() || '未分类';
             const description = $('addDesc').value.trim();
             const editId = $('editId').value;
             if (!name || !url) { showToast('❌ 名称和网址必填'); return }
@@ -3251,6 +3165,31 @@
                     showToast('✅ 已保存到本地');
                 }
             }
+        };
+
+        // ==================== 移动分组确认 ====================
+        $('btnConfirmMove').onclick = async () => {
+            const isBatch = $('moveBatch').value === 'true';
+            const newCat = document.getElementById('moveCategorySelect').value.trim() || '未分类';
+            if (isBatch) { batchMoveToCategory(newCat);
+                closeModal('moveModal'); return; }
+            const id = $('moveItemId').value;
+            if (!id) { showToast('❌ 未选择项目'); return; }
+            if (state.isOnline && !String(id).startsWith('local_')) {
+                try { const { error } = await getClient().from('nav_links').update({ category: newCat }).eq('id', id); if (
+                        error) throw error;
+                    showToast(`✅ 已移动到「${newCat}」`) } catch (err) { handleDbError(err, '移动'); return }
+            }
+            let local = getLocalData();
+            const idx = local.findIndex(i => String(i.id) === String(id));
+            if (idx >= 0) { local[idx].category = newCat;
+                saveLocalData(local) }
+            state.allData = state.isOnline ? state.allData.map(i => String(i.id) === String(id) ? { ...i,
+                category: newCat } : i) : local;
+            closeModal('moveModal');
+            resetAllSwipes();
+            renderAll();
+            if (!state.isOnline) showToast(`✅ 已移动到「${newCat}」`);
         };
 
         // ==================== 核心加载逻辑 ====================
@@ -3305,7 +3244,7 @@
 
         // ==================== 初始化 ====================
         (function init() {
-            // 页面加载时跳转到默认分组
+            // 加载默认分组
             const savedDefault = localStorage.getItem('nav_defaultCategory');
             if (savedDefault) {
                 state.defaultCategory = savedDefault;
@@ -3325,8 +3264,9 @@
             setupEditModeToggle();
             setupLongPress();
             initDragListeners();
+            setupNewCategoryButtons();
 
-            // 多选模式点击处理
+            // 多选模式点击
             contentEl.addEventListener('click', function(e) {
                 if (!state.multiSelectMode) return;
                 const card = e.target.closest('.card');
@@ -3369,7 +3309,6 @@
                     }
                 }
                 updateMultiSelectToolbar();
-                updateCategorySuggestions();
             }
 
             searchBar.style.display = 'none';
