@@ -262,38 +262,51 @@
         .multi-select-mode .card:hover { transform: none !important; box-shadow: var(--shadow) !important; border-color: var(--border) !important; }
         .multi-select-mode .card::before { opacity: 0 !important; }
 
-        /* 编辑开关 - 卡片右上角按钮 */
+        /* 编辑开关 - 与卡片融为一体（无边框/无背景/低饱和） */
         .edit-mode .card .edit-btn {
             display: flex !important;
         }
         .card .edit-btn {
             display: none;
             position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
             color: var(--text-secondary);
-            font-size: 14px;
+            opacity: 0.5;
+            font-size: 15px;
             cursor: pointer;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
+            transition: opacity 0.2s, color 0.2s, transform 0.2s;
             z-index: 10;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: none;
+            padding: 0;
         }
         .card .edit-btn:hover {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-            transform: scale(1.1);
+            background: transparent;
+            color: var(--primary);
+            opacity: 1;
+            transform: translateY(-50%) scale(1.08);
         }
         .card .edit-btn:active {
-            transform: scale(0.9);
+            transform: translateY(-50%) scale(0.9);
         }
+        /* 列表视图：给编辑按钮让出位置，避免遮挡文字 */
+        .view-list.edit-mode .swipe-wrapper .card { padding-right: calc(var(--card-pad) + 30px); }
+        /* 网格视图：按钮贴合卡片右上角 */
+        .view-grid .card .edit-btn {
+            top: 6px;
+            right: 6px;
+            transform: none;
+        }
+        .view-grid .card .edit-btn:hover { transform: scale(1.08); }
+        .view-grid .card .edit-btn:active { transform: scale(0.9); }
 
         .sort-banner {
             position: sticky; top: calc(var(--header-height) + 4px); z-index: 95;
@@ -634,6 +647,62 @@
         .rls-alert code { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 6px; font-family: monospace; word-break: break-all; display: block; margin: 8px 0; }
         .rls-alert button { margin-top: 6px; padding: 6px 14px; background: var(--danger); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
 
+        /* ===== 设置中心（整体页面式） ===== */
+        .settings-page {
+            position: fixed; inset: 0; z-index: 900;
+            background: var(--bg);
+            display: none; flex-direction: column;
+        }
+        .settings-page.show { display: flex; }
+        .settings-topbar {
+            position: sticky; top: 0; flex-shrink: 0;
+            height: var(--header-height); display: flex; align-items: center; gap: 12px;
+            padding: 0 20px; background: var(--bg-card); border-bottom: 1px solid var(--border);
+        }
+        .settings-topbar h2 { font-size: 18px; font-weight: 700; flex: 1; }
+        .settings-back {
+            width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text); font-size: 24px; line-height: 1;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--transition);
+        }
+        .settings-back:hover { border-color: var(--primary); color: var(--primary); }
+        .settings-mode-tag {
+            font-size: 12px; color: var(--text-secondary); border: 1px solid var(--border);
+            padding: 3px 12px; border-radius: 20px; white-space: nowrap;
+        }
+        .settings-mode-tag.online { color: var(--success); border-color: var(--success); }
+        .settings-body { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
+        .settings-body::-webkit-scrollbar { width: 6px; }
+        .settings-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .set-section { margin-bottom: 20px; }
+        .set-section-title {
+            font-size: 12px; font-weight: 700; color: var(--text-secondary);
+            letter-spacing: 0.6px; margin: 0 4px 8px; display: flex; align-items: center; gap: 6px;
+        }
+        .set-row {
+            display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px;
+        }
+        .set-row.col { flex-direction: column; align-items: stretch; gap: 10px; }
+        .set-row-main { flex: 1; min-width: 0; }
+        .set-row-label { font-size: 14px; font-weight: 600; }
+        .set-row-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.5; }
+        .set-select {
+            min-width: 150px; max-width: 240px; padding: 7px 10px; border: 1px solid var(--border);
+            border-radius: 8px; background: var(--bg); color: var(--text); font-size: 13px; cursor: pointer;
+            outline: none; font-family: inherit; flex-shrink: 0;
+        }
+        .set-select:focus { border-color: var(--primary); }
+        .set-row.col .set-select { max-width: 100%; width: 100%; }
+        .set-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .set-actions .btn { flex: none; padding: 8px 14px; font-size: 13px; border-radius: 8px; }
+        .set-note { font-size: 12px; color: var(--text-secondary); line-height: 1.7; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; }
+        .set-divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+        .settings-body .form-group { margin-bottom: 12px; }
+        .settings-body .form-group label { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+        .settings-body .online-fields { margin-top: 4px; }
+        .settings-body .rls-alert { margin-top: 12px; }
+
         @media (max-width: 768px) {
             .header { padding: 12px 16px; }
             .header h1 { font-size: 18px; }
@@ -686,7 +755,45 @@
             .sort-tree-node .node-row .level-select { width: 60px; font-size: 12px; }
             .sort-tree-node .node-row .item-name { min-width: 40px; }
             .modal { max-width: 100%; margin: 10px; padding: 20px; }
+            .settings-body { padding: 14px 14px 100px; }
+            .settings-topbar { padding: 0 14px; }
+            .settings-topbar h2 { font-size: 16px; }
+            .set-row { flex-wrap: wrap; }
+            .set-select { width: 100%; max-width: 100%; min-width: 0; }
+            .set-actions .btn { flex: 1 1 40%; }
+            .set-grid { display: block; }
         }
+        /* ===== PC 端设置页：内容居中 + 双列栅格 ===== */
+        @media (min-width: 769px) {
+            .settings-topbar-inner { max-width: 880px; margin: 0 auto; width: 100%; display: flex; align-items: center; gap: 12px; }
+            .settings-inner { max-width: 880px; margin: 0 auto; }
+            .settings-body { padding: 22px 28px 100px; }
+            .settings-topbar { padding: 0 28px; }
+            .settings-topbar h2 { font-size: 19px; }
+            .set-section { margin-bottom: 26px; }
+            .set-section-title { font-size: 13px; margin: 0 6px 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+            .set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; align-items: stretch; }
+            .set-grid .set-row { margin-bottom: 0; }
+            .set-row { padding: 14px 16px; }
+            .set-actions { gap: 10px; }
+            .set-actions .btn { padding: 9px 16px; }
+            .set-note { padding: 12px 16px; }
+        }
+        /* 右键/长按菜单勾选标记 */
+        .ctx-item .check { width: 16px; flex-shrink: 0; font-size: 12px; color: var(--primary); text-align: center; }
+        .ctx-item .check-label { flex: 1; }
+        /* 重复数据清理 */
+        .dedupe-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); margin: 12px 0 8px; cursor: pointer; }
+        .dedupe-check input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+        .dedupe-group { border-bottom: 1px solid var(--border); padding: 8px 4px; }
+        .dedupe-group:last-child { border-bottom: none; }
+        .dedupe-group-head { font-size: 12px; color: var(--text-secondary); word-break: break-all; margin-bottom: 4px; }
+        .dedupe-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+        .dedupe-item .dedupe-tag { font-size: 11px; padding: 1px 8px; border-radius: 10px; background: var(--danger); color: #fff; flex-shrink: 0; }
+        .dedupe-item.keep .dedupe-tag { background: var(--success); }
+        .dedupe-item .dedupe-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dedupe-item .dedupe-cat { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; filter: none !important; }
     </style>
 </head>
 <body>
@@ -757,75 +864,161 @@
         <div class="ctx-item danger" data-action="delete">🗑️ 删除</div>
     </div>
 
-    <!-- 设置弹窗 -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal">
-            <div class="modal-header"><h2>⚙️ 设置中心</h2><button class="close-btn" onclick="closeModal('settingsModal')">&times;</button></div>
-            <p class="subtitle">管理连接、显示密度与数据。</p>
+    <!-- 设置中心（整体页面式） -->
+    <div class="settings-page" id="settingsModal">
+        <div class="settings-topbar">
+            <div class="settings-topbar-inner">
+                <button class="settings-back" id="btnCloseSettings" title="返回">&lsaquo;</button>
+                <h2>⚙️ 设置中心</h2>
+                <span class="settings-mode-tag" id="settingsModeTag">💾 离线模式</span>
+            </div>
+        </div>
+        <div class="settings-body">
+            <div class="settings-inner">
             <div id="rlsAlertContainer"></div>
 
-            <div class="mode-switch">
-                <div><div class="mode-label" id="modeLabelText">📡 在线模式</div><div class="mode-desc" id="modeDescText">连接 Supabase 云端数据库</div></div>
-                <label class="switch"><input type="checkbox" id="modeToggle" checked><span class="slider"></span></label>
-            </div>
-
-            <div class="online-fields" id="onlineFields">
-                <div id="sbConfigDisplay" style="display:none;">
-                    <div>✅ 已连接到 Supabase</div>
-                    <div class="url-text">URL: <span id="displayUrl"></span></div>
+            <div class="set-section">
+                <div class="set-section-title">🔌 连接模式</div>
+                <div class="set-row">
+                    <div class="set-row-main">
+                        <div class="set-row-label" id="modeLabelText">💾 离线模式</div>
+                        <div class="set-row-desc" id="modeDescText">仅使用浏览器本地存储</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="modeToggle"><span class="slider"></span></label>
                 </div>
-                <div id="sbConfigInput">
-                    <div class="form-group"><label>Supabase URL</label><input type="url" id="inputUrl" placeholder="https://xxxxx.supabase.co"></div>
-                    <div class="form-group"><label>Anon Key</label><input type="text" id="inputKey" placeholder="eyJhbGciOiJIUzI1NiIs..."></div>
-                    <div class="modal-actions"><button class="btn btn-primary" id="btnSaveSettings">💾 保存并连接</button></div>
+                <div class="online-fields hidden" id="onlineFields">
+                    <div id="sbConfigDisplay" style="display:none;">
+                        <div class="set-row col">
+                            <div class="set-row-main">
+                                <div class="set-row-label">✅ 已连接到 Supabase</div>
+                                <div class="set-row-desc url-text">URL: <span id="displayUrl"></span></div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" id="btnEditConfig">✏️ 修改连接信息</button>
+                        </div>
+                    </div>
+                    <div id="sbConfigInput">
+                        <div class="set-row col">
+                            <div class="form-group"><label>Supabase URL</label><input type="url" id="inputUrl" placeholder="https://xxxxx.supabase.co"></div>
+                            <div class="form-group"><label>Anon Key</label><input type="text" id="inputKey" placeholder="eyJhbGciOiJIUzI1NiIs..."></div>
+                            <button class="btn btn-primary btn-sm" id="btnSaveSettings">💾 保存并连接</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <hr class="section-divider">
-            <h3>🎚️ 显示密度</h3>
-            <div class="density-control">
-                <div class="density-header"><span>卡片紧凑度</span><span class="density-val" id="densityVal">紧凑</span></div>
-                <input type="range" class="density-slider" id="densitySlider" min="0" max="100" value="0">
-                <div class="density-labels"><span>紧凑</span><span>标准</span><span>宽松</span></div>
+            <div class="set-section">
+                <div class="set-section-title">🎨 外观显示</div>
+                <div class="set-grid">
+                    <div class="set-row">
+                        <div class="set-row-main">
+                            <div class="set-row-label">🌗 主题</div>
+                            <div class="set-row-desc">浅色 / 深色</div>
+                        </div>
+                        <select class="set-select" id="themeSelect">
+                            <option value="light">☀️ 浅色</option>
+                            <option value="dark">🌙 深色</option>
+                        </select>
+                    </div>
+                    <div class="set-row">
+                        <div class="set-row-main">
+                            <div class="set-row-label">▦ 每列卡片数</div>
+                            <div class="set-row-desc">网格视图每行卡片数，也可右键/长按视图按钮设置</div>
+                        </div>
+                        <select class="set-select" id="columnsSelect"></select>
+                    </div>
+                </div>
+                <div class="set-row col">
+                    <div class="set-row-main">
+                        <div class="set-row-label">🎚️ 显示密度 <span class="density-val" id="densityVal">紧凑</span></div>
+                        <div class="set-row-desc">调整卡片间距、图标与文字大小</div>
+                    </div>
+                    <input type="range" class="density-slider" id="densitySlider" min="0" max="100" value="0">
+                    <div class="density-labels"><span>紧凑</span><span>标准</span><span>宽松</span></div>
+                </div>
             </div>
 
-            <hr class="section-divider">
-            <h3>✏️ 编辑模式</h3>
-            <div class="mode-switch">
-                <div><div class="mode-label">开启编辑按钮</div><div class="mode-desc">在每个卡片右上角显示 ✏️ 按钮，点击快速编辑</div></div>
-                <label class="switch"><input type="checkbox" id="editModeToggle"><span class="slider"></span></label>
+            <div class="set-section">
+                <div class="set-section-title">📂 分组设置</div>
+                <div class="set-grid">
+                    <div class="set-row">
+                        <div class="set-row-main">
+                            <div class="set-row-label">⭐ 默认分组</div>
+                            <div class="set-row-desc">打开页面时自动进入的分组</div>
+                        </div>
+                        <select class="set-select" id="defaultCategorySelect"></select>
+                    </div>
+                    <div class="set-row">
+                        <div class="set-row-main">
+                            <div class="set-row-label">↕️ 分组排序</div>
+                            <div class="set-row-desc">拖拽调整分组顺序与层级结构</div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="btnOpenGroupSort">打开排序</button>
+                    </div>
+                </div>
+                <div class="set-note" id="groupSyncInfo">分组设置加载中...</div>
             </div>
 
-            <hr class="section-divider">
-            <h3>☁️ 数据同步</h3>
-            <div class="btn-group">
-                <button class="btn btn-primary btn-sm" id="btnRefresh" title="刷新在线状态">🔄 刷新状态</button>
-                <button class="btn btn-success btn-sm" id="btnUploadToCloud">⬆️ 本地→云端</button>
-                <button class="btn btn-warning btn-sm" id="btnDownloadFromCloud">⬇️ 云端→本地</button>
+            <div class="set-section">
+                <div class="set-section-title">✏️ 编辑模式</div>
+                <div class="set-row">
+                    <div class="set-row-main">
+                        <div class="set-row-label">开启编辑按钮</div>
+                        <div class="set-row-desc">在每个卡片上显示 ✏️ 按钮，点击快速编辑；默认关闭，刷新页面后自动复位</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="editModeToggle"><span class="slider"></span></label>
+                </div>
             </div>
-            <div class="sync-info" id="syncInfoText">统计加载中...</div>
-            <hr class="section-divider">
-            <h3>📦 数据管理</h3>
-            <div class="btn-group">
-                <button class="btn btn-secondary btn-sm" id="btnExportJson">📤 导出JSON</button>
-                <button class="btn btn-secondary btn-sm" id="btnExportExcel">📤 导出Excel</button>
-                <button class="btn btn-primary btn-sm" id="btnImportJson">📥 导入JSON</button>
-                <button class="btn btn-primary btn-sm" id="btnImportExcel">📥 导入Excel</button>
+
+            <div class="set-section">
+                <div class="set-section-title">☁️ 数据同步</div>
+                <div class="set-actions">
+                    <button class="btn btn-primary btn-sm" id="btnRefresh" title="刷新在线状态">🔄 刷新状态</button>
+                    <button class="btn btn-success btn-sm" id="btnUploadToCloud">⬆️ 本地→云端</button>
+                    <button class="btn btn-warning btn-sm" id="btnDownloadFromCloud">⬇️ 云端→本地</button>
+                </div>
+                <div class="sync-info" id="syncInfoText">统计加载中...</div>
             </div>
-            <hr class="section-divider">
-            <h3>🔄 格式转换</h3>
-            <div class="btn-group">
-                <button class="btn btn-secondary btn-sm" id="btnJsonToExcel">JSON→Excel</button>
-                <button class="btn btn-secondary btn-sm" id="btnExcelToJson">Excel→JSON</button>
-                <button class="btn btn-secondary btn-sm" id="btnBookmarkToJson">📑 书签→JSON</button>
+
+            <div class="set-section">
+                <div class="set-section-title">📦 数据管理</div>
+                <div class="set-actions">
+                    <button class="btn btn-secondary btn-sm" id="btnExportJson">📤 导出JSON</button>
+                    <button class="btn btn-secondary btn-sm" id="btnExportExcel">📤 导出Excel</button>
+                    <button class="btn btn-primary btn-sm" id="btnImportJson">📥 导入JSON</button>
+                    <button class="btn btn-primary btn-sm" id="btnImportExcel">📥 导入Excel</button>
+                    <button class="btn btn-danger btn-sm" id="btnDedupe">🧹 清理重复数据</button>
+                </div>
+                <div class="set-note" style="margin-top:8px;">按网址识别重复项（忽略 http/https、www、末尾斜杠和大小写），清理时每组保留最先添加的一条。</div>
             </div>
+
+            <div class="set-section">
+                <div class="set-section-title">🔄 格式转换</div>
+                <div class="set-actions">
+                    <button class="btn btn-secondary btn-sm" id="btnJsonToExcel">JSON→Excel</button>
+                    <button class="btn btn-secondary btn-sm" id="btnExcelToJson">Excel→JSON</button>
+                    <button class="btn btn-secondary btn-sm" id="btnBookmarkToJson">📑 书签→JSON</button>
+                </div>
+            </div>
+
             <input type="file" id="fileInputJson" accept=".json" style="display:none;">
             <input type="file" id="fileInputExcel" accept=".xlsx,.xls" style="display:none;">
             <input type="file" id="fileInputConvertJson" accept=".json" style="display:none;">
             <input type="file" id="fileInputConvertExcel" accept=".xlsx,.xls" style="display:none;">
             <input type="file" id="fileInputBookmark" accept=".html,.htm" style="display:none;">
-            <div class="modal-actions" style="margin-top:24px;"><button class="btn btn-secondary" onclick="closeModal('settingsModal')">关闭</button></div>
+            </div>
         </div>
+    </div>
+
+    <!-- 视图列数菜单（右键/长按切换视图按钮） -->
+    <div class="ctx-menu" id="viewMenu">
+        <div class="ctx-item" data-cols="0"><span class="check"></span><span class="check-label">🔀 自动排列</span></div>
+        <div class="ctx-item" data-cols="2"><span class="check"></span><span class="check-label">2 个 / 列</span></div>
+        <div class="ctx-item" data-cols="3"><span class="check"></span><span class="check-label">3 个 / 列</span></div>
+        <div class="ctx-item" data-cols="4"><span class="check"></span><span class="check-label">4 个 / 列</span></div>
+        <div class="ctx-item" data-cols="5"><span class="check"></span><span class="check-label">5 个 / 列</span></div>
+        <div class="ctx-item" data-cols="6"><span class="check"></span><span class="check-label">6 个 / 列</span></div>
+        <div class="ctx-item" data-cols="8"><span class="check"></span><span class="check-label">8 个 / 列</span></div>
+        <div class="ctx-item" data-cols="10"><span class="check"></span><span class="check-label">10 个 / 列</span></div>
     </div>
 
     <!-- 分组排序弹窗 -->
@@ -860,11 +1053,11 @@
             <input type="hidden" id="editId">
             <div class="form-group"><label>名称 *</label><input type="text" id="addName" placeholder="如：百度"></div>
             <div class="form-group"><label>网址 *</label><input type="url" id="addUrl" placeholder="https://baidu.com"></div>
-            <div class="form-group"><label>分类</label>
+            <div class="form-group"><label>分组</label>
                 <select id="addCategorySelect" style="width:100%;">
-                    <option value="">选择或新建分类</option>
+                    <option value="">选择或新建分组</option>
                 </select>
-                <button type="button" class="btn btn-sm btn-secondary" id="addNewCategoryBtn" style="margin-top:4px;">➕ 新建分类</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="addNewCategoryBtn" style="margin-top:4px;">➕ 新建分组</button>
             </div>
             <div class="form-group"><label>描述</label><textarea id="addDesc" placeholder="简短描述..."></textarea></div>
             <div class="modal-actions">
@@ -885,11 +1078,26 @@
                 <select id="moveCategorySelect" style="width:100%;">
                     <option value="">选择分组</option>
                 </select>
-                <button type="button" class="btn btn-sm btn-secondary" id="moveNewCategoryBtn" style="margin-top:4px;">➕ 新建分类</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="moveNewCategoryBtn" style="margin-top:4px;">➕ 新建分组</button>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeModal('moveModal')">取消</button>
                 <button class="btn btn-primary" id="btnConfirmMove">确认移动</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重复数据清理弹窗 -->
+    <div class="modal-overlay" id="dedupeModal">
+        <div class="modal" style="max-width:640px;">
+            <div class="modal-header"><h2>🧹 重复数据清理</h2><button class="close-btn" onclick="closeModal('dedupeModal')">&times;</button></div>
+            <p class="subtitle">按网址识别重复项，每组默认保留最先添加的一条。</p>
+            <div class="set-note" id="dedupeSummary">检测中...</div>
+            <label class="dedupe-check"><input type="checkbox" id="dedupeSameCategory"> 仅清理同一分组内的重复（不同分组保留各自的）</label>
+            <div class="sort-tree-container" id="dedupeList" style="max-height:320px;"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('dedupeModal')">取消</button>
+                <button class="btn btn-danger" id="btnConfirmDedupe">🗑️ 清理重复</button>
             </div>
         </div>
     </div>
@@ -933,8 +1141,9 @@
             theme: localStorage.getItem('theme') || 'light',
             categories: [],
             isOnline: false,
-            mode: localStorage.getItem('nav_mode') || 'online',
+            mode: localStorage.getItem('nav_mode') || 'offline',
             density: parseInt(localStorage.getItem('nav_density') ?? '0'),
+            columnsPerRow: parseInt(localStorage.getItem('nav_columnsPerRow') ?? '0') || 0,
             ctxItem: null,
             ctxCategoryPath: null,
             ctxCategoryType: null,
@@ -946,9 +1155,11 @@
             defaultCategory: localStorage.getItem('nav_defaultCategory') || null,
             searchKeyword: '',
             searchActive: false,
+            dedupeOnlySameCategory: false,
+            settingsSyncError: null,
             selectedIds: [],
             sidebarOpen: localStorage.getItem('nav_sidebarOpen') === 'true' || window.innerWidth > 768,
-            editMode: localStorage.getItem('nav_editMode') === 'true',
+            editMode: false, // 默认关闭，且不持久化
             treeCollapsed: JSON.parse(localStorage.getItem('nav_tree_collapsed') || '{}'),
             sortTreeExpand: JSON.parse(localStorage.getItem('nav_sort_tree_expand') || '{}'),
             sortFilter: 'all',
@@ -977,6 +1188,7 @@
 
         sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
 
+        let resizeTimer = null;
         window.addEventListener('resize', () => {
             const isMobile = window.innerWidth <= 768;
             if (isMobile) {
@@ -986,6 +1198,11 @@
                 const open = localStorage.getItem('nav_sidebarOpen') === 'true';
                 sidebar.classList.toggle('collapsed', !open);
                 mainWrapper.classList.toggle('shifted', !open);
+            }
+            // 自定义每列卡片数时，跨断点需重新计算列宽
+            if (state.viewMode === 'grid' && state.columnsPerRow > 0) {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => renderContent(), 150);
             }
         });
 
@@ -1063,36 +1280,69 @@
         function getLocalData() { try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]') } catch { return [] } }
         function openModal(id) { $(id).classList.add('show'); }
         function closeModal(id) { $(id).classList.remove('show'); }
-        document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if (e.target === el) el
-                    .classList.remove('show') }));
+        // 点击遮罩关闭弹窗；「添加/编辑导航」弹窗例外（仅 X / 取消 / 保存 可关闭）
+        const NO_CLOSE_ON_OVERLAY = ['addModal'];
+        document.querySelectorAll('.modal-overlay').forEach(el => {
+            if (NO_CLOSE_ON_OVERLAY.includes(el.id)) return;
+            el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show') });
+        });
 
-        // ==================== 云端同步设置 ====================
+        // ==================== 云端同步设置（分组排序 / 默认分组 / 每列卡片数） ====================
+        const SETTINGS_TABLE_SQL =
+            `create table if not exists nav_settings (\n  id text primary key,\n  category_order jsonb,\n  default_category text,\n  columns_per_row int default 0,\n  updated_at timestamptz\n);\nalter table nav_settings enable row level security;\ncreate policy "Allow public all" on nav_settings for all using (true) with check (true);`;
+
         async function syncSettingsToCloud() {
-            if (state.mode !== 'online') return;
+            if (state.mode !== 'online') return false;
             try {
                 const client = getClient();
-                const payload = {
+                const base = {
                     id: 'app_settings',
                     category_order: state.categoryOrder || [],
                     default_category: state.defaultCategory || null,
                     updated_at: new Date().toISOString()
                 };
-                const { error } = await client.from('nav_settings').upsert(payload, { onConflict: 'id' });
-                if (error) console.warn('设置同步云端失败:', error);
-            } catch (e) { console.warn('设置同步异常:', e); }
+                // 优先带完整字段；若云端表缺少新列则回退为兼容字段
+                let { error } = await client.from('nav_settings')
+                    .upsert({ ...base, columns_per_row: state.columnsPerRow || 0 }, { onConflict: 'id' });
+                if (error) {
+                    const r2 = await client.from('nav_settings').upsert(base, { onConflict: 'id' });
+                    if (r2.error) {
+                        console.warn('设置同步云端失败:', r2.error);
+                        const msg = r2.error.message || '';
+                        if (/relation|does not exist|42P01|permission denied|row-level security/i.test(msg)) {
+                            state.settingsSyncError = msg;
+                        }
+                        return false;
+                    }
+                }
+                state.settingsSyncError = null;
+                return true;
+            } catch (e) {
+                console.warn('设置同步异常:', e);
+                state.settingsSyncError = e.message || String(e);
+                return false;
+            }
         }
 
         async function loadSettingsFromCloud() {
-            if (state.mode !== 'online') return;
+            if (state.mode !== 'online') return false;
             try {
                 const client = getClient();
-                const { data, error } = await client.from('nav_settings')
-                    .select('category_order, default_category')
+                let { data, error } = await client.from('nav_settings')
+                    .select('category_order, default_category, columns_per_row')
                     .eq('id', 'app_settings')
                     .maybeSingle();
+                if (error) {
+                    const r2 = await client.from('nav_settings')
+                        .select('category_order, default_category')
+                        .eq('id', 'app_settings')
+                        .maybeSingle();
+                    data = r2.data;
+                    error = r2.error;
+                }
                 if (error) throw error;
                 if (data) {
-                    if (data.category_order) {
+                    if (data.category_order && data.category_order.length) {
                         state.categoryOrder = data.category_order;
                         localStorage.setItem('nav_categoryOrder', JSON.stringify(data.categoryOrder));
                     }
@@ -1100,9 +1350,64 @@
                         state.defaultCategory = data.default_category;
                         localStorage.setItem('nav_defaultCategory', data.default_category);
                     }
+                    if (data.columns_per_row !== undefined && data.columns_per_row !== null) {
+                        state.columnsPerRow = parseInt(data.columns_per_row) || 0;
+                        localStorage.setItem('nav_columnsPerRow', String(state.columnsPerRow));
+                    }
                 }
-            } catch (e) { console.warn('加载云端设置失败:', e); }
+                state.settingsSyncError = null;
+                return true;
+            } catch (e) {
+                console.warn('加载云端设置失败:', e);
+                state.settingsSyncError = String(e.message || e);
+                return false;
+            }
         }
+
+        // ==================== 每列卡片数 ====================
+        const COLS_OPTIONS = [0, 2, 3, 4, 5, 6, 8, 10];
+        function applyColumnsPerRow(cols, silent) {
+            state.columnsPerRow = cols || 0;
+            localStorage.setItem('nav_columnsPerRow', String(state.columnsPerRow));
+            const sel = $('columnsSelect');
+            if (sel) sel.value = String(state.columnsPerRow);
+            if (state.viewMode !== 'grid' && state.columnsPerRow > 0) {
+                state.viewMode = 'grid';
+                localStorage.setItem('viewMode', 'grid');
+                applyView();
+            }
+            syncSettingsToCloud();
+            renderContent();
+            if (!silent) showToast(state.columnsPerRow ? `▦ 每行 ${state.columnsPerRow} 个卡片` : '🔀 已恢复自动排列');
+        }
+        function buildColumnsSelect() {
+            const sel = $('columnsSelect');
+            if (!sel) return;
+            sel.innerHTML = COLS_OPTIONS.map(c =>
+                `<option value="${c}">${c === 0 ? '🔀 自动排列' : c + ' 个 / 行'}</option>`).join('');
+            sel.value = String(state.columnsPerRow);
+        }
+        const viewMenu = $('viewMenu');
+        function openViewMenu(x, y) {
+            viewMenu.querySelectorAll('.ctx-item').forEach(el => {
+                const c = parseInt(el.dataset.cols);
+                const chk = el.querySelector('.check');
+                if (chk) chk.textContent = (c === state.columnsPerRow) ? '✓' : '';
+            });
+            viewMenu.classList.add('show');
+            const mw = viewMenu.offsetWidth,
+                mh = viewMenu.offsetHeight;
+            viewMenu.style.left = Math.min(x, window.innerWidth - mw - 10) + 'px';
+            viewMenu.style.top = Math.min(y, window.innerHeight - mh - 10) + 'px';
+        }
+        function closeViewMenu() { viewMenu.classList.remove('show'); }
+        viewMenu.querySelectorAll('.ctx-item').forEach(el => {
+            el.onclick = (e) => {
+                e.stopPropagation();
+                closeViewMenu();
+                applyColumnsPerRow(parseInt(el.dataset.cols) || 0);
+            };
+        });
 
         // ==================== 密度 ====================
         function applyDensity(val) {
@@ -1139,14 +1444,22 @@
             const f = $('onlineFields');
             const display = $('sbConfigDisplay');
             const input = $('sbConfigInput');
+            const tag = $('settingsModeTag');
+            if (tag) {
+                tag.textContent = on ? '📡 在线模式' : '💾 离线模式';
+                tag.classList.toggle('online', on);
+            }
             if (on) {
                 f.classList.remove('hidden');
                 f.style.maxHeight = '600px';
-                display.style.display = 'block';
-                input.style.display = 'none';
-                const { url } = getConfig();
+                const { url, key } = getConfig();
+                const configured = !!(url && key);
+                display.style.display = configured ? 'block' : 'none';
+                input.style.display = configured ? 'none' : 'block';
                 $('displayUrl').textContent = url || '未设置';
             } else {
+                f.classList.add('hidden');
+                f.style.maxHeight = '0px';
                 display.style.display = 'none';
                 input.style.display = 'block';
             }
@@ -1199,7 +1512,8 @@
             toggle.checked = state.editMode;
             toggle.addEventListener('change', function() {
                 state.editMode = this.checked;
-                localStorage.setItem('nav_editMode', String(state.editMode));
+                // 编辑模式默认关闭：不写入 localStorage，刷新页面后自动复位
+                localStorage.removeItem('nav_editMode');
                 closeModal('settingsModal');
                 renderContent();
                 showToast(state.editMode ? '✏️ 编辑模式已开启' : '✅ 编辑模式已关闭');
@@ -1220,6 +1534,7 @@
                         renderAll();
                         showToast('💾 已切换离线模式');
                     } else {
+                        state.settingsSyncError = null;
                         loadData(true);
                         showToast('📡 已切换在线模式');
                     }
@@ -1259,15 +1574,80 @@
         $('btnTheme').onclick = () => { state.theme = state.theme === 'light' ? 'dark' : 'light';
             localStorage.setItem('theme', state.theme);
             applyTheme() };
+        let viewSuppressClick = false;
         $('btnView').onclick = () => {
+            if (viewSuppressClick) { viewSuppressClick = false; return; }
             if (state.sortMode || state.multiSelectMode) { showToast('⚠️ 请先退出当前模式'); return }
             state.viewMode = state.viewMode === 'grid' ? 'list' : 'grid';
             localStorage.setItem('viewMode', state.viewMode);
             applyView();
             renderContent()
         };
+        // 右键 / 长按「切换视图」按钮：设置每列卡片数
+        $('btnView').addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            hideCtxMenu();
+            const r = this.getBoundingClientRect();
+            openViewMenu(r.left, r.bottom + 6);
+        });
+        let viewBtnPressTimer = null;
+        $('btnView').addEventListener('touchstart', function(e) {
+            const btn = this;
+            const touch = e.touches[0];
+            viewBtnPressTimer = setTimeout(function() {
+                viewBtnPressTimer = null;
+                viewSuppressClick = true;
+                setTimeout(() => { viewSuppressClick = false; }, 400);
+                hideCtxMenu();
+                const r = btn.getBoundingClientRect();
+                openViewMenu(touch.clientX, r.bottom + 6);
+            }, 500);
+        }, { passive: true });
+        $('btnView').addEventListener('touchmove', function() {
+            if (viewBtnPressTimer) { clearTimeout(viewBtnPressTimer); viewBtnPressTimer = null; }
+        }, { passive: true });
+        $('btnView').addEventListener('touchend', function() {
+            if (viewBtnPressTimer) { clearTimeout(viewBtnPressTimer); viewBtnPressTimer = null; }
+        }, { passive: true });
 
         // ==================== 设置 ====================
+        // 填充默认分组下拉
+        function populateDefaultCategorySelect() {
+            const sel = $('defaultCategorySelect');
+            if (!sel) return;
+            const paths = getCategoryPaths();
+            let html = `<option value="">未设置（默认进入全部）</option><option value="全部">全部</option>`;
+            paths.forEach(p => { html += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`; });
+            sel.innerHTML = html;
+            sel.value = (state.defaultCategory && (state.defaultCategory === '全部' || paths.includes(state
+                .defaultCategory))) ? state.defaultCategory : '';
+        }
+
+        function updateGroupSyncInfo() {
+            const el = $('groupSyncInfo');
+            if (!el) return;
+            const paths = getCategoryPaths();
+            const orderCount = (state.categoryOrder || []).length;
+            const syncState = state.mode === 'online' ? (state.isOnline ? '☁️ 已连接，分组排序与默认分组会自动同步到云端' :
+                '⚠️ 在线但未连接，当前仅保存在本地') : '💾 离线模式，分组排序与默认分组仅保存在本地';
+            let html =
+                `📂 分组数量：<strong>${paths.length}</strong> 个<br>⭐ 默认分组：<strong>${state.defaultCategory || '未设置'}</strong><br>↕️ 排序条目：<strong>${orderCount}</strong> 条<br>${syncState}`;
+            if (state.settingsSyncError) {
+                html +=
+                    `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);color:var(--danger);">⚠️ 云端设置同步失败：${escapeHtml(String(state.settingsSyncError).slice(0, 140))}<br>请到 Supabase 执行建表 SQL 后重试：<br><button class="btn btn-danger btn-sm" id="btnCopySettingsSql" style="margin-top:6px;">📋 复制建表 SQL</button></div>`;
+            }
+            el.innerHTML = html;
+            const copyBtn = $('btnCopySettingsSql');
+            if (copyBtn) copyBtn.onclick = function() {
+                const btn = this;
+                navigator.clipboard.writeText(SETTINGS_TABLE_SQL).then(function() {
+                    btn.textContent = '已复制';
+                    showToast('✅ 建表 SQL 已复制');
+                }).catch(function() { showToast('❌ 复制失败，请手动复制'); });
+            };
+        }
+
         function openSettings() {
             const c = getConfig();
             $('inputUrl').value = c.url;
@@ -1281,6 +1661,11 @@
             setupSaveSettingsButton();
             const editToggle = document.getElementById('editModeToggle');
             if (editToggle) editToggle.checked = state.editMode;
+            const themeSel = $('themeSelect');
+            if (themeSel) themeSel.value = state.theme;
+            buildColumnsSelect();
+            populateDefaultCategorySelect();
+            updateGroupSyncInfo();
             openModal('settingsModal');
         }
         $('btnSettings').onclick = openSettings;
@@ -1329,7 +1714,7 @@
             const currentMove = moveSelect.value;
 
             const buildOptions = (selected) => {
-                let html = `<option value="">${selected === '' ? '选择或新建分类' : '选择分组'}</option>`;
+                let html = `<option value="">选择或新建分组</option>`;
                 paths.forEach(p => {
                     const sel = (p === selected) ? 'selected' : '';
                     html += `<option value="${escapeHtml(p)}" ${sel}>${escapeHtml(p)}</option>`;
@@ -1359,13 +1744,13 @@
             const moveBtn = document.getElementById('moveNewCategoryBtn');
 
             const handleNewCategory = (selectEl) => {
-                const name = prompt('请输入新分类名称（支持多级路径，如 工作/开发）：');
+                const name = prompt('请输入新分组名称（支持多级路径，如 工作/开发）：');
                 if (name && name.trim()) {
                     const trimmed = name.trim();
                     // 检查是否已存在
                     const paths = getCategoryPaths();
                     if (paths.includes(trimmed)) {
-                        showToast('⚠️ 分类已存在');
+                        showToast('⚠️ 分组已存在');
                         selectEl.value = trimmed;
                         return;
                     }
@@ -1388,7 +1773,7 @@
                     // 将新分类添加到数据中（仅为了下拉显示，实际保存时才会真正创建链接）
                     // 但为了列表一致，我们不需要修改 allData，因为新分类还没有链接
                     // 用户保存链接时才会创建
-                    showToast(`✅ 已创建分类「${trimmed}」`);
+                    showToast(`✅ 已创建分组「${trimmed}」`);
                 }
             };
 
@@ -1802,42 +2187,54 @@
             }
         }
 
-        function saveGroupSort() {
+        async function saveGroupSort() {
             const container = $('groupSortTree');
             const items = container.querySelectorAll('.sort-tree-node');
-            const newOrder = [];
+            const domPaths = [];
             const levelMap = {};
             items.forEach(el => {
                 const path = el.dataset.path;
                 const row = el.querySelector('.node-row');
                 const select = row ? row.querySelector('.level-select') : null;
                 const level = parseInt(select ? select.value : (el.dataset.level || 1));
-                newOrder.push(path);
-                levelMap[path] = level;
+                if (path) domPaths.push(path);
+                if (path) levelMap[path] = level;
             });
 
-            const newPaths = [];
-            const stack = [];
-            newOrder.forEach((path, index) => {
-                const targetLevel = levelMap[path] || 1;
-                const parts = path.split('/');
-                const name = parts[parts.length - 1];
-                while (stack.length > targetLevel - 1) stack.pop();
-                while (stack.length < targetLevel - 1) stack.push('未命名');
-                const parentPath = stack.length > 0 ? stack.join('/') : '';
-                const newPath = parentPath ? parentPath + '/' + name : name;
-                newPaths.push(newPath);
-                stack.push(name);
-            });
-
-            const pathSet = new Set(newPaths);
-            if (pathSet.size !== newPaths.length) {
-                showToast('❌ 路径冲突，请检查层级设置');
-                return;
-            }
+            // 未显示在当前筛选视图中的分组，保持原顺序追加在后面，避免保存后顺序丢失
+            const allPaths = getCategoryPaths();
+            const domSet = new Set(domPaths);
+            const restPaths = allPaths.filter(p => !domSet.has(p));
 
             const pathMap = {};
-            newOrder.forEach((oldPath, idx) => { pathMap[oldPath] = newPaths[idx]; });
+            let finalOrder;
+            if (state.sortFilter === 'all') {
+                // 全部视图：允许按层级重新计算路径
+                const newPaths = [];
+                const stack = [];
+                domPaths.forEach(path => {
+                    const targetLevel = levelMap[path] || 1;
+                    const parts = path.split('/');
+                    const name = parts[parts.length - 1];
+                    while (stack.length > targetLevel - 1) stack.pop();
+                    while (stack.length < targetLevel - 1) stack.push('未命名');
+                    const parentPath = stack.length > 0 ? stack.join('/') : '';
+                    const newPath = parentPath ? parentPath + '/' + name : name;
+                    newPaths.push(newPath);
+                    stack.push(name);
+                });
+                const pathSet = new Set(newPaths);
+                if (pathSet.size !== newPaths.length) {
+                    showToast('❌ 路径冲突，请检查层级设置');
+                    return;
+                }
+                domPaths.forEach((oldPath, idx) => { pathMap[oldPath] = newPaths[idx]; });
+                finalOrder = newPaths.concat(restPaths);
+            } else {
+                // 筛选视图：只调整顺序，不改动层级结构
+                domPaths.forEach(p => { pathMap[p] = p; });
+                finalOrder = domPaths.concat(restPaths);
+            }
 
             state.allData.forEach(d => {
                 const oldCat = d.category;
@@ -1854,23 +2251,25 @@
                 }
             });
 
-            const finalOrder = newPaths;
             state.categoryOrder = finalOrder;
             localStorage.setItem('nav_categoryOrder', JSON.stringify(finalOrder));
             saveLocalData(state.allData);
-            syncSettingsToCloud();
+            const settingsSynced = await syncSettingsToCloud();
 
-            if (state.isOnline) {
-                const client = getClient();
-                const updates = state.allData.map(d => client.from('nav_links').update({ category: d.category }).eq('id', d
-                    .id));
-                Promise.all(updates).then(() => {
-                    showToast('✅ 分组排序已保存并同步');
-                }).catch(() => {
+            if (state.mode === 'online') {
+                try {
+                    const client = getClient();
+                    const updates = state.allData.map(d => client.from('nav_links').update({ category: d.category })
+                        .eq('id', d.id));
+                    await Promise.all(updates);
+                    if (settingsSynced) showToast('✅ 分组排序已保存并同步云端');
+                    else showToast('⚠️ 链接已同步，但排序设置写入失败');
+                } catch (err) {
+                    console.warn('分组排序云端同步失败:', err);
                     showToast('⚠️ 已保存本地，云端同步失败');
-                });
+                }
             } else {
-                showToast('✅ 分组排序已保存');
+                showToast('✅ 分组排序已保存（离线模式，仅本地）');
             }
 
             if (state.defaultCategory && pathMap[state.defaultCategory]) {
@@ -2163,6 +2562,7 @@
 
         function hideCtxMenu() {
             ctxMenu.classList.remove('show');
+            if (typeof closeViewMenu === 'function') closeViewMenu();
             state.ctxCategoryPath = null;
             state.ctxCategoryType = null;
             state.ctxItem = null;
@@ -2170,6 +2570,8 @@
         }
 
         document.addEventListener('contextmenu', function(e) {
+            // 视图按钮 / 菜单内部交给各自的处理器，避免刚打开就被关闭
+            if (e.target.closest('#btnView') || e.target.closest('.ctx-menu')) return;
             const card = e.target.closest('.card');
             if (card && card.hasAttribute('data-longpress')) {
                 e.preventDefault();
@@ -2258,10 +2660,10 @@
                     } else if (action === 'setDefaultCategory') {
                         setDefaultCategory(path);
                     } else if (action === 'delete') {
-                        if (confirm(`确定删除分类「${path}」及其所有子分类下的链接吗？`)) {
+                        if (confirm(`确定删除分组「${path}」及其所有子分组下的链接吗？`)) {
                             const toDelete = state.allData.filter(d => d.category === path || (d.category && d
                                 .category.startsWith(path + '/')));
-                            if (toDelete.length === 0) { showToast('该分类下没有链接'); return; }
+                            if (toDelete.length === 0) { showToast('该分组下没有链接'); return; }
                             const ids = toDelete.map(d => d.id);
                             if (state.isOnline) {
                                 const client = getClient();
@@ -2842,18 +3244,138 @@
             e.target.value = '';
         };
 
-        // ==================== 数据同步 ====================
+        // ==================== 重复数据工具 ====================
+        // 网址规范化：忽略协议、www、末尾斜杠与大小写，用于重复判定
+        function normalizeUrl(u) {
+            let s = String(u || '').trim();
+            if (!s) return '';
+            s = s.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+            return s.toLowerCase();
+        }
+
+        // 列表去重：按网址保留第一条
+        function dedupeList(list) {
+            const seen = new Set();
+            const out = [];
+            let removed = 0;
+            (list || []).forEach(d => {
+                const k = normalizeUrl(d.url);
+                if (!k) { out.push(d); return; }
+                if (seen.has(k)) { removed++; return; }
+                seen.add(k);
+                out.push(d);
+            });
+            return { list: out, removed: removed };
+        }
+
+        // 找出重复分组（每组 2 条以上）
+        function findDuplicateGroups(onlySameCategory) {
+            const map = new Map();
+            state.allData.forEach(d => {
+                const k = normalizeUrl(d.url);
+                if (!k) return;
+                const key = onlySameCategory ? (k + '@' + (d.category || '未分类')) : k;
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(d);
+            });
+            return Array.from(map.values()).filter(g => g.length > 1);
+        }
+
+        function renderDedupeList() {
+            const groups = findDuplicateGroups(state.dedupeOnlySameCategory);
+            const total = groups.reduce((n, g) => n + g.length - 1, 0);
+            const box = $('dedupeList');
+            const btn = $('btnConfirmDedupe');
+            $('dedupeSummary').innerHTML = groups.length ?
+                `当前共 <strong>${state.allData.length}</strong> 条数据，发现 <strong>${groups.length}</strong> 组重复，清理后将删除 <strong>${total}</strong> 条。` :
+                `当前共 <strong>${state.allData.length}</strong> 条数据，未发现重复项 🎉`;
+            if (!groups.length) {
+                box.innerHTML =
+                    '<div style="padding:24px;text-align:center;color:var(--text-secondary);">没有需要清理的重复数据</div>';
+                if (btn) btn.disabled = true;
+                return;
+            }
+            if (btn) btn.disabled = false;
+            box.innerHTML = groups.map((g, i) => `
+                <div class="dedupe-group">
+                    <div class="dedupe-group-head">第 ${i + 1} 组 · ${escapeHtml(g[0].url || '')}</div>
+                    ${g.map((item, idx) => `
+                        <div class="dedupe-item ${idx === 0 ? 'keep' : ''}">
+                            <span class="dedupe-tag">${idx === 0 ? '保留' : '删除'}</span>
+                            <span class="dedupe-name">${escapeHtml(item.name || '未命名')}</span>
+                            <span class="dedupe-cat">${escapeHtml(item.category || '未分类')}</span>
+                        </div>`).join('')}
+                </div>`).join('');
+        }
+
+        function openDedupeModal() {
+            if (!state.allData.length) { showToast('⚠️ 暂无数据'); return; }
+            state.dedupeOnlySameCategory = false;
+            const cb = $('dedupeSameCategory');
+            if (cb) cb.checked = false;
+            renderDedupeList();
+            openModal('dedupeModal');
+        }
+
+        async function confirmDedupe() {
+            const groups = findDuplicateGroups(state.dedupeOnlySameCategory);
+            if (!groups.length) { showToast('未发现重复数据'); return; }
+            const removeIds = [];
+            groups.forEach(g => g.slice(1).forEach(d => removeIds.push(d.id)));
+            if (!confirm(`确定删除 ${removeIds.length} 条重复数据吗？\n每组保留最先添加的一条。`)) return;
+            if (state.mode === 'online') {
+                try {
+                    const client = getClient();
+                    for (const id of removeIds) {
+                        if (String(id).startsWith('local_')) continue;
+                        await client.from('nav_links').delete().eq('id', id);
+                    }
+                } catch (err) { handleDbError(err, '清理'); return; }
+            }
+            const idSet = new Set(removeIds.map(String));
+            state.allData = state.allData.filter(d => !idSet.has(String(d.id)));
+            saveLocalData(state.allData);
+            closeModal('dedupeModal');
+            renderAll();
+            updateSyncInfo();
+            showToast(`✅ 已清理 ${removeIds.length} 条重复数据`);
+        }
+
+        // ==================== 数据同步（上传/下载自动去重） ====================
         $('btnUploadToCloud').onclick = async function() {
             if (!state.isOnline) { showToast('❌ 请先切在线模式'); return; }
             const local = getLocalData();
             if (!local.length) { showToast('⚠️ 本地无数据'); return; }
-            if (!confirm(`上传${local.length}条到云端？`)) return;
             try {
-                const items = local.map(i => ({ name: i.name, url: i.url, category: i.category || '未分类',
-                        description: i.description || '', is_active: true }));
+                showToast('🔄 正在比对云端数据...');
+                const { data: cloud, error: ce } = await getClient().from('nav_links').select('id,url');
+                if (ce) throw ce;
+                const cloudKeys = new Set((cloud || []).map(c => normalizeUrl(c.url)).filter(Boolean));
+                const seen = new Set();
+                const items = [];
+                local.forEach(i => {
+                    const k = normalizeUrl(i.url);
+                    if (!k || cloudKeys.has(k) || seen.has(k)) return; // 云端已有 / 本地重复 → 跳过
+                    seen.add(k);
+                    items.push({
+                        name: i.name,
+                        url: i.url,
+                        category: i.category || '未分类',
+                        description: i.description || '',
+                        is_active: true
+                    });
+                });
+                const skipped = local.length - items.length;
+                if (!items.length) {
+                    showToast(`✅ 云端已存在全部 ${local.length} 条，无需上传`);
+                    return;
+                }
+                if (!confirm(
+                        `本地 ${local.length} 条，云端已有 ${skipped} 条。\n将只上传 ${items.length} 条新数据，继续？`
+                    )) return;
                 const { error } = await getClient().from('nav_links').insert(items);
                 if (error) throw error;
-                showToast(`✅ 已上传${items.length}条`);
+                showToast(`✅ 已上传 ${items.length} 条${skipped ? `（跳过重复 ${skipped} 条）` : ''}`);
                 loadData(true);
                 updateSyncInfo();
             } catch (err) { handleDbError(err, '上传'); }
@@ -2868,12 +3390,20 @@
                     .eq('is_active', true)
                     .order('sort_order', { ascending: true });
                 if (error) throw error;
-                saveLocalData(data || []);
-                state.allData = data || [];
+                const { list, removed } = dedupeList(data || []);
+                saveLocalData(list);
+                state.allData = list;
                 renderAll();
                 updateSyncInfo();
-                showToast(`✅ 已拉取${(data||[]).length}条`);
+                showToast(`✅ 已拉取 ${list.length} 条${removed ? `（自动去重 ${removed} 条）` : ''}`);
             } catch (err) { handleDbError(err, '拉取'); }
+        };
+
+        $('btnDedupe').onclick = openDedupeModal;
+        $('btnConfirmDedupe').onclick = confirmDedupe;
+        $('dedupeSameCategory').onchange = function() {
+            state.dedupeOnlySameCategory = this.checked;
+            renderDedupeList();
         };
 
         // ==================== 搜索功能 ====================
@@ -3003,7 +3533,15 @@
                 </div>`;
             }
 
-            contentEl.innerHTML = bannerHtml + `<div class="${cls}${modeClass}">${filtered.map(item => cardHtml(item)).join('')}</div>`;
+            // 网格视图：按设定的每列卡片数渲染（移动端最多 3 列）
+            let gridStyle = '';
+            if (state.viewMode === 'grid' && state.columnsPerRow > 0) {
+                const cols = window.innerWidth <= 768 ? Math.min(state.columnsPerRow, 3) : state.columnsPerRow;
+                gridStyle = ` style="grid-template-columns:repeat(${cols}, minmax(0, 1fr));"`;
+            }
+
+            contentEl.innerHTML = bannerHtml +
+                `<div class="${cls}${modeClass}"${gridStyle}>${filtered.map(item => cardHtml(item)).join('')}</div>`;
 
             if (state.sortMode || state.multiSelectMode) {
                 const exitBtn = $('btnExitModes');
@@ -3104,7 +3642,21 @@
             $('addUrl').value = '';
             $('addDesc').value = '';
             populateCategorySelects();
-            document.getElementById('addCategorySelect').value = '';
+            // 自动填入当前所在分组
+            const addSelect = document.getElementById('addCategorySelect');
+            const preset = (state.currentCategory && state.currentCategory !== '全部' && state.currentCategory !==
+                '未分类') ? state.currentCategory : '';
+            if (preset) {
+                if (!Array.from(addSelect.options).some(o => o.value === preset)) {
+                    const opt = document.createElement('option');
+                    opt.value = preset;
+                    opt.textContent = preset;
+                    addSelect.appendChild(opt);
+                }
+                addSelect.value = preset;
+            } else {
+                addSelect.value = '';
+            }
             openModal('addModal');
         };
 
@@ -3226,9 +3778,11 @@
                     .eq('is_active', true)
                     .order('sort_order', { ascending: true });
                 if (!error && data) {
-                    saveLocalData(data);
-                    state.allData = data;
+                    const { list, removed } = dedupeList(data); // 拉取时自动去重，避免重复项同时存在
+                    saveLocalData(list);
+                    state.allData = list;
                     updateSyncStatus(true, '云端同步');
+                    if (removed) console.log('云端数据自动去重，忽略重复项', removed, '条');
                 } else throw error;
                 await loadSettingsFromCloud();
                 renderAll();
@@ -3265,6 +3819,70 @@
             setupLongPress();
             initDragListeners();
             setupNewCategoryButtons();
+            buildColumnsSelect();
+
+            // 设置中心：返回
+            const closeSettingsBtn = $('btnCloseSettings');
+            if (closeSettingsBtn) closeSettingsBtn.onclick = () => closeModal('settingsModal');
+
+            // 设置中心：主题
+            const themeSel = $('themeSelect');
+            if (themeSel) {
+                themeSel.value = state.theme;
+                themeSel.addEventListener('change', function() {
+                    state.theme = this.value;
+                    localStorage.setItem('theme', state.theme);
+                    applyTheme();
+                    showToast(state.theme === 'dark' ? '🌙 已切换深色' : '☀️ 已切换浅色');
+                });
+            }
+
+            // 设置中心：每列卡片数
+            const colSel = $('columnsSelect');
+            if (colSel) {
+                colSel.value = String(state.columnsPerRow);
+                colSel.addEventListener('change', function() {
+                    applyColumnsPerRow(parseInt(this.value) || 0);
+                });
+            }
+
+            // 设置中心：默认分组（本地 + 云端同步）
+            const defSel = $('defaultCategorySelect');
+            if (defSel) {
+                defSel.addEventListener('change', function() {
+                    const v = this.value;
+                    if (v) {
+                        state.defaultCategory = v;
+                        localStorage.setItem('nav_defaultCategory', v);
+                    } else {
+                        state.defaultCategory = null;
+                        localStorage.removeItem('nav_defaultCategory');
+                    }
+                    syncSettingsToCloud();
+                    updateGroupSyncInfo();
+                    renderAll();
+                    showToast(v ? `⭐ 默认分组设为「${v}」` : '✅ 已清除默认分组');
+                });
+            }
+
+            // 设置中心：打开分组排序
+            const groupSortBtn = $('btnOpenGroupSort');
+            if (groupSortBtn) groupSortBtn.onclick = () => openGroupSortModal();
+
+            // 设置中心：修改已保存的连接信息
+            const editCfgBtn = $('btnEditConfig');
+            if (editCfgBtn) editCfgBtn.onclick = function() {
+                $('sbConfigDisplay').style.display = 'none';
+                $('sbConfigInput').style.display = 'block';
+            };
+
+            // ESC：关闭列数菜单 / 设置中心
+            document.addEventListener('keydown', function(e) {
+                if (e.key !== 'Escape') return;
+                if (viewMenu.classList.contains('show')) { closeViewMenu(); return; }
+                const sp = $('settingsModal');
+                if (sp && sp.classList.contains('show')) closeModal('settingsModal');
+            });
 
             // 多选模式点击
             contentEl.addEventListener('click', function(e) {
